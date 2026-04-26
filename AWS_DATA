@@ -1,0 +1,4 @@
+backend_ip = "51.21.0.211"
+cloudfront_id = "E8XRRUQALU2IR"
+cloudfront_url = "https://d3j1y3kiqalty4.cloudfront.net"
+frontend_bucket = "apple-doctor-frontend-7f9a82c4"

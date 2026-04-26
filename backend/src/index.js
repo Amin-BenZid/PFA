@@ -11,6 +11,7 @@ import mongoose from 'mongoose';
 
 import healthRouter from './routes/health.js';
 import predictRouter from './routes/predict.js';
+import historyRouter from './routes/history.js';
 
 dotenv.config();
 
@@ -26,6 +27,7 @@ app.use(morgan('dev'));
 // Routes
 app.use('/api/health', healthRouter);
 app.use('/api/predict', predictRouter);
+app.use('/api/history', historyRouter);
 
 // Global error handler
 app.use((err, req, res, next) => {
@@ -39,6 +41,8 @@ app.use((err, req, res, next) => {
 // Connect to MongoDB then start server
 async function start() {
   try {
+
+
     if (process.env.MONGODB_URI) {
       await mongoose.connect(process.env.MONGODB_URI);
       console.log('✅ MongoDB connected');
