@@ -1,38 +1,16 @@
-# 🎨 Frontend — Track B
+# React + Vite
 
-React app for farmers to upload apple photos and view disease diagnoses.
+This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
-## Initial Scaffold
+Currently, two official plugins are available:
 
-We'll use **Vite + React + Tailwind**. To scaffold the actual project, run from this folder:
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
 
-```bash
-npm create vite@latest . -- --template react
-npm install
-npm install -D tailwindcss postcss autoprefixer
-npx tailwindcss init -p
-npm install axios react-router-dom @tanstack/react-query lucide-react
-```
+## React Compiler
 
-The pre-created folder structure (`src/components`, `src/pages`, etc.) is ready to be populated once Vite has scaffolded the base files.
+The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
 
-## Folder Plan
+## Expanding the ESLint configuration
 
-```
-frontend/
-├── public/
-└── src/
-    ├── components/    # Reusable UI components (Button, ImageUpload, BBoxOverlay)
-    ├── pages/         # Route components (Home, Upload, Result, History)
-    ├── services/      # API client (axios instance, endpoints)
-    ├── hooks/         # Custom React hooks
-    ├── assets/        # Images, icons
-    └── styles/        # Global styles, Tailwind config
-```
-
-## Connecting to Backend
-
-Set in `.env`:
-```
-VITE_API_BASE_URL=http://localhost:3000/api
-```
+If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
