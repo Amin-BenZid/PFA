@@ -1,0 +1,86 @@
+# ============================================
+# Python (AI model)
+# ============================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+.venv/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ipynb_checkpoints/
+
+# ============================================
+# Node.js (Backend & Frontend)
+# ============================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+package-lock.json.bak
+
+# ============================================
+# Build outputs
+# ============================================
+build/
+dist/
+out/
+.next/
+.cache/
+
+# ============================================
+# AI Model artifacts (use S3 or Git LFS instead)
+# ============================================
+ai-model/data/raw/*
+ai-model/data/processed/*
+ai-model/data/annotations/*
+ai-model/models/*.pt
+ai-model/models/*.onnx
+ai-model/models/*.pb
+ai-model/models/*.h5
+ai-model/runs/
+ai-model/wandb/
+!ai-model/data/raw/.gitkeep
+!ai-model/data/processed/.gitkeep
+!ai-model/data/annotations/.gitkeep
+!ai-model/models/.gitkeep
+
+# ============================================
+# Environment & Secrets (NEVER COMMIT!)
+# ============================================
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+aws-credentials*
+.aws/
+
+# ============================================
+# IDE / OS
+# ============================================
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# ============================================
+# Docker
+# ============================================
+docker-compose.override.yml
+
+# ============================================
+# Logs & databases
+# ============================================
+*.log
+logs/
+*.sqlite
+*.db
