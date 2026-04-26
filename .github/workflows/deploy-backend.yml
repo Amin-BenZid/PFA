@@ -9,14 +9,14 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: SSH deploy
+      - name: SSH and deploy
         uses: appleboy/ssh-action@v1
         with:
-          host:     ${{ secrets.EC2_IP }}
+          host: ${{ secrets.EC2_IP }}
           username: ubuntu
-          key:      ${{ secrets.EC2_SSH_KEY }}
+          key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            cd /app
+            cd /app/app
             git pull origin main
             cd backend
             npm install --production
