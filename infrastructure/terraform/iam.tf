@@ -23,3 +23,25 @@ resource "aws_iam_instance_profile" "ec2_profile" {
   name = "${var.project_name}-profile"
   role = aws_iam_role.ec2_role.name
 }
+
+resource "aws_iam_role_policy" "cloudwatch_access" {
+  name = "${var.project_name}-cloudwatch-policy"
+  role = aws_iam_role.ec2_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Action = [
+        "cloudwatch:PutMetricData",
+        "cloudwatch:GetMetricStatistics",
+        "cloudwatch:ListMetrics",
+        "logs:CreateLogGroup",
+        "logs:CreateLogStream",
+        "logs:PutLogEvents",
+        "logs:DescribeLogStreams"
+      ]
+      Resource = "*"
+    }]
+  })
+}
