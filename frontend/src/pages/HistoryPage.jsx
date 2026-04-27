@@ -39,7 +39,7 @@ function DiagnosisCard({ item }) {
         width: '100%', background: 'none', border: 'none', cursor: 'pointer',
         padding: '16px 20px', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 14,
       }}>
-        {item.image_url ? (
+        {item.image_url && item.image_url.startsWith('https://') ? (
           <img src={item.image_url} alt="apple" style={{ width: 56, height: 56, borderRadius: 12, objectFit: 'cover', flexShrink: 0 }} />
         ) : (
           <div style={{ width: 56, height: 56, borderRadius: 12, flexShrink: 0, background: diag.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26 }}>
