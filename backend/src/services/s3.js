@@ -39,5 +39,6 @@ export async function uploadImageToS3(buffer, mimetype, requestId = uuidv4()) {
     })
   );
 
-  return `s3://${BUCKET()}/${key}`;
+  const region = process.env.AWS_REGION || 'eu-north-1';
+  return `https://${BUCKET()}.s3.${region}.amazonaws.com/${key}`;
 }
