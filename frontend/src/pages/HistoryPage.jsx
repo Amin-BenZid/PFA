@@ -275,7 +275,7 @@ export default function HistoryPage() {
     setError(null);
     try {
       const data = await getHistory(p, f === "all" ? null : f);
-      setItems(data.diagnoses || []);
+      setItems(data.data || []);
       setTotal(data.total || 0);
     } catch {
       setError(
