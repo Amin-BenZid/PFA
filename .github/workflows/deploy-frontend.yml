@@ -18,7 +18,7 @@ jobs:
       - name: Install and build
         working-directory: frontend
         env:
-          VITE_API_URL: http://${{ secrets.EC2_IP }}:3000/api
+          VITE_API_URL: https://apple-doctor.duckdns.org/api
         run: |
           npm install
           npm run build
