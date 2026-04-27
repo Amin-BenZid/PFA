@@ -28,7 +28,7 @@ const upload = multer({
 // Evaluated lazily at request time (after dotenv has loaded)
 const AI_URL   = () => process.env.AI_SERVICE_URL || 'http://localhost:8000';
 const USE_MOCK = () => process.env.USE_MOCK_AI !== 'false';
-const USE_S3   = () => !!(process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY);
+const USE_S3   = () => !!(process.env.S3_BUCKET);
 
 // ── Internal mock — returns a fake diagnosis without calling the AI service ──
 function buildInternalMock(requestId, startTime) {
