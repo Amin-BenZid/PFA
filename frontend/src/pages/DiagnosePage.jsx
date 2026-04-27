@@ -152,7 +152,7 @@ export default function DiagnosePage() {
             </div>
 
             {/* Report */}
-            <div style={{ padding: '0 16px 32px', marginTop: -8 }}>
+            <div style={{ padding: '0 16px calc(32px + env(safe-area-inset-bottom))', marginTop: -8 }}>
               <DiagnosisReport result={result} imagePreview={preview} />
               <motion.button whileTap={{ scale: 0.97 }} onClick={reset}
                 style={{ width: '100%', marginTop: 20, padding: '17px', background: 'linear-gradient(135deg, #166534, #22c55e)', color: '#fff', border: 'none', borderRadius: 18, fontSize: 16, fontWeight: 700, cursor: 'pointer', boxShadow: '0 8px 24px rgba(22,163,74,0.3)' }}>
