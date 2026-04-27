@@ -8,13 +8,14 @@ import { v4 as uuidv4 } from 'uuid';
 let _s3 = null;
 function getS3Client() {
   if (!_s3) {
-    _s3 = new S3Client({
-      region: process.env.AWS_REGION || 'eu-north-1',
-      credentials: {
+    const config = { region: process.env.AWS_REGION || 'eu-north-1' };
+    if (process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY) {
+      config.credentials = {
         accessKeyId:     process.env.AWS_ACCESS_KEY_ID,
         secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-      },
-    });
+      };
+    }
+    _s3 = new S3Client(config);
   }
   return _s3;
 }
