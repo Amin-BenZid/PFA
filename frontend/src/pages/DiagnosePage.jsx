@@ -3,8 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { diagnoseImage } from '../services/api';
 import CameraCapture from '../components/CameraCapture';
 import DiagnosisReport from '../components/DiagnosisReport';
-import * as cocoSsd from '@tensorflow-models/coco-ssd';
-import '@tensorflow/tfjs';
+// TF.js + COCO-SSD loaded via CDN in index.html → available as window.cocoSsd
 
 export default function DiagnosePage() {
   const [phase, setPhase] = useState('camera'); // camera | checking | preview | scanning | result
@@ -20,11 +19,11 @@ export default function DiagnosePage() {
 
   // Load COCO-SSD model in background on mount
   useEffect(() => {
-    cocoSsd.load().then(m => {
-      modelRef.current = m;
-    }).catch(() => {
-      // If model fails to load, we just skip validation
-    });
+    if (window.cocoSsd) {
+      window.cocoSsd.load().then(m => {
+        modelRef.current = m;
+      }).catch(() => {});
+    }
   }, []);
 
   async function handleFile(f) {
@@ -43,7 +42,7 @@ export default function DiagnosePage() {
         const predictions = await modelRef.current.detect(img);
         const hasApple = predictions.some(p => p.class === 'apple' && p.score > 0.3);
         if (!hasApple) {
-          setAppleError('No apple detected. Please point the camera at an apple. 🍎');
+          setAppleError('Aucune pomme détectée. Pointez la caméra vers une pomme. 🍎');
           setPhase('camera');
           return;
         }
@@ -68,7 +67,7 @@ export default function DiagnosePage() {
       setResult(data);
       setPhase('result');
     } catch {
-      setError('Could not reach the server. Please try again.');
+      setError('Impossible de contacter le serveur. Veuillez réessayer.');
       setPhase('preview');
     }
   }
@@ -89,7 +88,7 @@ export default function DiagnosePage() {
                 <span style={{ fontSize: 26 }}>🍎</span>
                 <div>
                   <div style={{ color: '#fff', fontWeight: 700, fontSize: 17, lineHeight: 1.2 }}>Apple Doctor</div>
-                  <div style={{ color: '#4ade80', fontSize: 11 }}>Disease Detection AI</div>
+                  <div style={{ color: '#4ade80', fontSize: 11 }}>Détection de Maladies par IA</div>
                 </div>
               </div>
             </div>
@@ -104,7 +103,7 @@ export default function DiagnosePage() {
               <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16 }}>
                 <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
                   style={{ width: 40, height: 40, border: '3px solid rgba(255,255,255,0.2)', borderTop: '3px solid #4ade80', borderRadius: '50%' }} />
-                <div style={{ color: '#fff', fontSize: 15, fontWeight: 600 }}>Checking for apple...</div>
+                <div style={{ color: '#fff', fontSize: 15, fontWeight: 600 }}>Vérification de la pomme...</div>
               </div>
             )}
 
@@ -154,15 +153,15 @@ export default function DiagnosePage() {
               <div style={{ width: 36, height: 4, borderRadius: 2, background: '#e2e8f0', margin: '0 auto 20px' }} />
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 16 }}>
                 <span style={{ fontSize: 18 }}>✅</span>
-                <span style={{ color: '#16a34a', fontWeight: 600, fontSize: 14 }}>Apple detected — ready for analysis</span>
+                <span style={{ color: '#16a34a', fontWeight: 600, fontSize: 14 }}>Pomme détectée — prête pour l'analyse</span>
               </div>
               {error && <div style={{ background: '#fef2f2', color: '#dc2626', borderRadius: 12, padding: '12px 16px', fontSize: 13, marginBottom: 16, textAlign: 'center' }}>{error}</div>}
               <motion.button whileTap={{ scale: 0.97 }} onClick={analyze}
                 style={{ width: '100%', padding: '17px', background: 'linear-gradient(135deg, #166534, #22c55e)', color: '#fff', border: 'none', borderRadius: 18, fontSize: 16, fontWeight: 700, cursor: 'pointer', boxShadow: '0 8px 24px rgba(22,163,74,0.4)', marginBottom: 12 }}>
-                🔬 Analyze with AI
+                🔬 Analyser avec l'IA
               </motion.button>
               <button onClick={reset} style={{ width: '100%', padding: '14px', background: 'transparent', color: '#64748b', border: 'none', borderRadius: 18, fontSize: 15, fontWeight: 500, cursor: 'pointer' }}>
-                ← Retake Photo
+                ← Reprendre la photo
               </button>
             </motion.div>
           </motion.div>
@@ -180,8 +179,8 @@ export default function DiagnosePage() {
                   style={{ position: 'absolute', width: 200, height: 2, background: 'linear-gradient(to right, transparent, #4ade80, transparent)', boxShadow: '0 0 16px #4ade80, 0 0 40px rgba(74,222,128,0.4)' }} />
               </div>
               <div>
-                <div style={{ color: '#fff', fontSize: 18, fontWeight: 600, textAlign: 'center' }}>Analyzing...</div>
-                <div style={{ color: '#4ade80', fontSize: 13, textAlign: 'center', marginTop: 6 }}>AI is scanning the apple tissue</div>
+                <div style={{ color: '#fff', fontSize: 18, fontWeight: 600, textAlign: 'center' }}>Analyse en cours...</div>
+                <div style={{ color: '#4ade80', fontSize: 13, textAlign: 'center', marginTop: 6 }}>L'IA scanne le tissu de la pomme</div>
               </div>
             </div>
           </motion.div>
@@ -196,7 +195,7 @@ export default function DiagnosePage() {
               <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, rgba(248,250,252,1) 100%)' }} />
               <motion.button whileTap={{ scale: 0.9 }} onClick={reset}
                 style={{ position: 'absolute', top: 16, left: 16, background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(8px)', border: 'none', color: '#fff', borderRadius: 12, padding: '8px 14px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
-                ← New Scan
+                ← Nouveau scan
               </motion.button>
             </div>
 
@@ -204,7 +203,7 @@ export default function DiagnosePage() {
               <DiagnosisReport result={result} imagePreview={preview} />
               <motion.button whileTap={{ scale: 0.97 }} onClick={reset}
                 style={{ width: '100%', marginTop: 20, padding: '17px', background: 'linear-gradient(135deg, #166534, #22c55e)', color: '#fff', border: 'none', borderRadius: 18, fontSize: 16, fontWeight: 700, cursor: 'pointer', boxShadow: '0 8px 24px rgba(22,163,74,0.3)' }}>
-                📷 Scan Another Apple
+                📷 Scanner une autre pomme
               </motion.button>
             </div>
           </motion.div>
