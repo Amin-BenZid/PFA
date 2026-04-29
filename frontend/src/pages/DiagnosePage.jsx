@@ -14,8 +14,7 @@ export default function DiagnosePage() {
   const [camError, setCamError]     = useState(null);
   const [noApple, setNoApple]       = useState(false);   // controls the popup
   const [cameraKey, setCameraKey]   = useState(0);       // forces CameraCapture remount
-  const camRef  = useRef(null);
-  const fileRef = useRef(null);
+  const camRef   = useRef(null);
   const modelRef = useRef(null);
 
   useEffect(() => {
@@ -94,9 +93,9 @@ export default function DiagnosePage() {
               </div>
             </div>
 
-            {/* Scan frame */}
+            {/* Apple guide */}
             <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
-              <ScanFrame />
+              <AppleGuide />
             </div>
 
             {/* Checking overlay */}
@@ -118,18 +117,10 @@ export default function DiagnosePage() {
             {/* Bottom controls */}
             {phase === 'camera' && (
               <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '20px 40px 36px', background: 'linear-gradient(to top, rgba(0,0,0,0.75), transparent)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <motion.button whileTap={{ scale: 0.88 }} onClick={() => fileRef.current.click()}
-                  style={{ width: 50, height: 50, borderRadius: 16, background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(10px)', border: '1.5px solid rgba(255,255,255,0.25)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>
-                  🖼️
-                </motion.button>
-                <input ref={fileRef} type="file" accept="image/*" hidden onChange={e => e.target.files[0] && handleFile(e.target.files[0])} />
-
                 <motion.button whileTap={{ scale: 0.92 }} onClick={() => camRef.current?.capture()}
                   style={{ width: 76, height: 76, borderRadius: '50%', background: '#fff', border: '4px solid rgba(255,255,255,0.4)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 0 3px rgba(255,255,255,0.2)' }}>
                   <div style={{ width: 52, height: 52, borderRadius: '50%', background: '#fff', border: '2px solid #e2e8f0' }} />
                 </motion.button>
-
-                <div style={{ width: 50 }} />
               </div>
             )}
 
@@ -200,10 +191,10 @@ export default function DiagnosePage() {
             style={{ position: 'absolute', inset: 0 }}>
             <img src={preview} alt="scanning" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.55)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 24 }}>
-              <div style={{ width: 220, height: 220, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <ScanFrame />
+              <div style={{ width: 190, height: 220, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <AppleGuide />
                 <motion.div animate={{ y: [-80, 80, -80] }} transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-                  style={{ position: 'absolute', width: 200, height: 2, background: 'linear-gradient(to right, transparent, #4ade80, transparent)', boxShadow: '0 0 16px #4ade80, 0 0 40px rgba(74,222,128,0.4)' }} />
+                  style={{ position: 'absolute', width: 160, height: 2, background: 'linear-gradient(to right, transparent, #4ade80, transparent)', boxShadow: '0 0 16px #4ade80, 0 0 40px rgba(74,222,128,0.4)' }} />
               </div>
               <div>
                 <div style={{ color: '#fff', fontSize: 18, fontWeight: 600, textAlign: 'center' }}>Analyse en cours...</div>
@@ -240,15 +231,44 @@ export default function DiagnosePage() {
   );
 }
 
-function ScanFrame() {
-  const c = { position: 'absolute', width: 28, height: 28, border: '3px solid #4ade80' };
+function AppleGuide() {
   return (
-    <motion.div animate={{ opacity: [0.6, 1, 0.6] }} transition={{ duration: 2, repeat: Infinity }}
-      style={{ width: 220, height: 220, position: 'relative' }}>
-      <div style={{ ...c, top: 0, left: 0, borderRight: 'none', borderBottom: 'none', borderRadius: '6px 0 0 0' }} />
-      <div style={{ ...c, top: 0, right: 0, borderLeft: 'none', borderBottom: 'none', borderRadius: '0 6px 0 0' }} />
-      <div style={{ ...c, bottom: 0, left: 0, borderRight: 'none', borderTop: 'none', borderRadius: '0 0 0 6px' }} />
-      <div style={{ ...c, bottom: 0, right: 0, borderLeft: 'none', borderTop: 'none', borderRadius: '0 0 6px 0' }} />
-    </motion.div>
+    <motion.svg
+      width="190" height="220" viewBox="0 0 190 220"
+      animate={{ opacity: [0.5, 1, 0.5] }}
+      transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
+      style={{ filter: 'drop-shadow(0 0 8px rgba(74,222,128,0.6))' }}
+    >
+      {/* Stem */}
+      <motion.path
+        d="M 95 48 C 95 35, 100 22, 112 14"
+        fill="none" stroke="#4ade80" strokeWidth="3" strokeLinecap="round"
+      />
+      {/* Leaf */}
+      <motion.path
+        d="M 108 28 C 118 16, 136 18, 130 32 C 124 40, 108 35, 108 28 Z"
+        fill="rgba(74,222,128,0.25)" stroke="#4ade80" strokeWidth="1.8"
+      />
+      {/* Apple body */}
+      <motion.path
+        d="M 95 52
+           C 80 42, 55 42, 38 58
+           C 18 76, 10 102, 12 128
+           C 15 162, 38 192, 68 200
+           C 80 204, 88 201, 95 198
+           C 102 201, 110 204, 122 200
+           C 152 192, 175 162, 178 128
+           C 180 102, 172 76, 152 58
+           C 135 42, 110 42, 95 52 Z"
+        fill="rgba(74,222,128,0.07)"
+        stroke="#4ade80"
+        strokeWidth="2.5"
+        strokeDasharray="10 5"
+      />
+      {/* Center hint text */}
+      <text x="95" y="135" textAnchor="middle" fill="rgba(74,222,128,0.8)" fontSize="11" fontFamily="Arial" fontWeight="600">
+        Placez la pomme ici
+      </text>
+    </motion.svg>
   );
 }
