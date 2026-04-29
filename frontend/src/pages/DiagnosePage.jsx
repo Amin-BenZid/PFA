@@ -1,28 +1,63 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { diagnoseImage } from '../services/api';
 import CameraCapture from '../components/CameraCapture';
 import DiagnosisReport from '../components/DiagnosisReport';
+import * as cocoSsd from '@tensorflow-models/coco-ssd';
+import '@tensorflow/tfjs';
 
 export default function DiagnosePage() {
-  const [phase, setPhase] = useState('camera'); // camera | preview | scanning | result
+  const [phase, setPhase] = useState('camera'); // camera | checking | preview | scanning | result
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(null);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
   const [camError, setCamError] = useState(null);
+  const [appleError, setAppleError] = useState(null);
   const camRef = useRef(null);
   const fileRef = useRef(null);
+  const modelRef = useRef(null);
 
-  function handleFile(f) {
+  // Load COCO-SSD model in background on mount
+  useEffect(() => {
+    cocoSsd.load().then(m => {
+      modelRef.current = m;
+    }).catch(() => {
+      // If model fails to load, we just skip validation
+    });
+  }, []);
+
+  async function handleFile(f) {
     setFile(f);
-    setPreview(URL.createObjectURL(f));
     setError(null);
+    setAppleError(null);
+    const url = URL.createObjectURL(f);
+    setPreview(url);
+    setPhase('checking');
+
+    try {
+      if (modelRef.current) {
+        const img = new Image();
+        img.src = url;
+        await new Promise(resolve => { img.onload = resolve; });
+        const predictions = await modelRef.current.detect(img);
+        const hasApple = predictions.some(p => p.class === 'apple' && p.score > 0.3);
+        if (!hasApple) {
+          setAppleError('No apple detected. Please point the camera at an apple. 🍎');
+          setPhase('camera');
+          return;
+        }
+      }
+    } catch {
+      // Model error — skip validation and proceed
+    }
+
     setPhase('preview');
   }
 
   function reset() {
-    setFile(null); setPreview(null); setResult(null); setError(null); setCamError(null);
+    setFile(null); setPreview(null); setResult(null);
+    setError(null); setCamError(null); setAppleError(null);
     setPhase('camera');
   }
 
@@ -43,10 +78,9 @@ export default function DiagnosePage() {
       <AnimatePresence mode="wait">
 
         {/* ── CAMERA PHASE ── */}
-        {phase === 'camera' && (
+        {(phase === 'camera' || phase === 'checking') && (
           <motion.div key="camera" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             style={{ position: 'absolute', inset: 0 }}>
-            {/* Live camera feed */}
             <CameraCapture ref={camRef} onCapture={handleFile} onError={setCamError} />
 
             {/* Top gradient + logo */}
@@ -65,6 +99,23 @@ export default function DiagnosePage() {
               <ScanFrame />
             </div>
 
+            {/* Checking overlay */}
+            {phase === 'checking' && (
+              <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16 }}>
+                <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                  style={{ width: 40, height: 40, border: '3px solid rgba(255,255,255,0.2)', borderTop: '3px solid #4ade80', borderRadius: '50%' }} />
+                <div style={{ color: '#fff', fontSize: 15, fontWeight: 600 }}>Checking for apple...</div>
+              </div>
+            )}
+
+            {/* Apple not found error */}
+            {appleError && phase === 'camera' && (
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+                style={{ position: 'absolute', bottom: 140, left: 24, right: 24, background: 'rgba(220,38,38,0.9)', backdropFilter: 'blur(10px)', borderRadius: 16, padding: '14px 18px', textAlign: 'center', color: '#fff', fontSize: 14, fontWeight: 500 }}>
+                {appleError}
+              </motion.div>
+            )}
+
             {/* Camera error */}
             {camError && (
               <div style={{ position: 'absolute', top: '50%', left: 24, right: 24, transform: 'translateY(-50%)', background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(10px)', borderRadius: 16, padding: 20, textAlign: 'center', color: '#fca5a5', fontSize: 13 }}>
@@ -74,16 +125,15 @@ export default function DiagnosePage() {
 
             {/* Bottom controls */}
             <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '20px 40px 36px', background: 'linear-gradient(to top, rgba(0,0,0,0.75), transparent)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              {/* Upload */}
               <motion.button whileTap={{ scale: 0.88 }} onClick={() => fileRef.current.click()}
                 style={{ width: 50, height: 50, borderRadius: 16, background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(10px)', border: '1.5px solid rgba(255,255,255,0.25)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>
                 🖼️
               </motion.button>
               <input ref={fileRef} type="file" accept="image/*" hidden onChange={e => e.target.files[0] && handleFile(e.target.files[0])} />
 
-              {/* Capture button */}
               <motion.button whileTap={{ scale: 0.92 }} onClick={() => camRef.current?.capture()}
-                style={{ width: 76, height: 76, borderRadius: '50%', background: '#fff', border: '4px solid rgba(255,255,255,0.4)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 0 3px rgba(255,255,255,0.2)' }}>
+                disabled={phase === 'checking'}
+                style={{ width: 76, height: 76, borderRadius: '50%', background: '#fff', border: '4px solid rgba(255,255,255,0.4)', cursor: phase === 'checking' ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 0 3px rgba(255,255,255,0.2)', opacity: phase === 'checking' ? 0.5 : 1 }}>
                 <div style={{ width: 52, height: 52, borderRadius: '50%', background: '#fff', border: '2px solid #e2e8f0' }} />
               </motion.button>
 
@@ -99,11 +149,13 @@ export default function DiagnosePage() {
             <img src={preview} alt="captured" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 50%)' }} />
 
-            {/* Bottom sheet */}
             <motion.div initial={{ y: 120, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ type: 'spring', stiffness: 300, damping: 30 }}
               style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(255,255,255,0.96)', backdropFilter: 'blur(24px)', borderRadius: '28px 28px 0 0', padding: '20px 24px 36px' }}>
               <div style={{ width: 36, height: 4, borderRadius: 2, background: '#e2e8f0', margin: '0 auto 20px' }} />
-              <p style={{ textAlign: 'center', color: '#64748b', fontSize: 14, marginBottom: 20 }}>Image ready for analysis</p>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 16 }}>
+                <span style={{ fontSize: 18 }}>✅</span>
+                <span style={{ color: '#16a34a', fontWeight: 600, fontSize: 14 }}>Apple detected — ready for analysis</span>
+              </div>
               {error && <div style={{ background: '#fef2f2', color: '#dc2626', borderRadius: 12, padding: '12px 16px', fontSize: 13, marginBottom: 16, textAlign: 'center' }}>{error}</div>}
               <motion.button whileTap={{ scale: 0.97 }} onClick={analyze}
                 style={{ width: '100%', padding: '17px', background: 'linear-gradient(135deg, #166534, #22c55e)', color: '#fff', border: 'none', borderRadius: 18, fontSize: 16, fontWeight: 700, cursor: 'pointer', boxShadow: '0 8px 24px rgba(22,163,74,0.4)', marginBottom: 12 }}>
@@ -122,7 +174,6 @@ export default function DiagnosePage() {
             style={{ position: 'absolute', inset: 0 }}>
             <img src={preview} alt="scanning" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.55)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 24 }}>
-              {/* Scan line */}
               <div style={{ width: 220, height: 220, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <ScanFrame />
                 <motion.div animate={{ y: [-80, 80, -80] }} transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
@@ -140,18 +191,15 @@ export default function DiagnosePage() {
         {phase === 'result' && result && (
           <motion.div key="result" initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
             style={{ position: 'absolute', inset: 0, background: '#f8fafc', overflowY: 'auto' }}>
-            {/* Image hero */}
             <div style={{ position: 'relative', height: 260, flexShrink: 0 }}>
               <img src={preview} alt="result" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, rgba(248,250,252,1) 100%)' }} />
-              {/* Back button */}
               <motion.button whileTap={{ scale: 0.9 }} onClick={reset}
                 style={{ position: 'absolute', top: 16, left: 16, background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(8px)', border: 'none', color: '#fff', borderRadius: 12, padding: '8px 14px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
                 ← New Scan
               </motion.button>
             </div>
 
-            {/* Report */}
             <div style={{ padding: '0 16px calc(32px + env(safe-area-inset-bottom))', marginTop: -8 }}>
               <DiagnosisReport result={result} imagePreview={preview} />
               <motion.button whileTap={{ scale: 0.97 }} onClick={reset}
