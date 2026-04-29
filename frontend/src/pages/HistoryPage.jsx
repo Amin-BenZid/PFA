@@ -4,17 +4,17 @@ import { getHistory } from '../services/api';
 import { getTreatmentByClass, URGENCY_COLORS } from '../services/treatments';
 
 const DIAGNOSIS_META = {
-  healthy:  { icon: '✅', label: 'Healthy',  color: '#16a34a', bg: '#dcfce7', border: '#86efac' },
-  diseased: { icon: '🦠', label: 'Diseased', color: '#d97706', bg: '#fef3c7', border: '#fcd34d' },
-  rotten:   { icon: '🔴', label: 'Rotten',   color: '#dc2626', bg: '#fee2e2', border: '#fca5a5' },
-  mixed:    { icon: '⚠️', label: 'Mixed',    color: '#9333ea', bg: '#f3e8ff', border: '#c4b5fd' },
+  healthy:  { icon: '✅', label: 'Sain',    color: '#16a34a', bg: '#dcfce7', border: '#86efac' },
+  diseased: { icon: '🦠', label: 'Malade',  color: '#d97706', bg: '#fef3c7', border: '#fcd34d' },
+  rotten:   { icon: '🔴', label: 'Pourri',  color: '#dc2626', bg: '#fee2e2', border: '#fca5a5' },
+  mixed:    { icon: '⚠️', label: 'Mixte',   color: '#9333ea', bg: '#f3e8ff', border: '#c4b5fd' },
 };
 
 const SEVERITY_META = {
-  none:     { label: 'None',     color: '#16a34a' },
-  mild:     { label: 'Mild',     color: '#65a30d' },
-  moderate: { label: 'Moderate', color: '#d97706' },
-  severe:   { label: 'Severe',   color: '#dc2626' },
+  none:     { label: 'Aucune',   color: '#16a34a' },
+  mild:     { label: 'Légère',   color: '#65a30d' },
+  moderate: { label: 'Modérée',  color: '#d97706' },
+  severe:   { label: 'Sévère',   color: '#dc2626' },
 };
 
 function DiagnosisCard({ item }) {
@@ -61,9 +61,9 @@ function DiagnosisCard({ item }) {
             })()}
           </div>
           <div style={{ marginTop: 4, fontSize: 13, color: '#6b7280' }}>
-            Severity: <span style={{ color: sev.color, fontWeight: 600 }}>{sev.label}</span>
+            Sévérité: <span style={{ color: sev.color, fontWeight: 600 }}>{sev.label}</span>
             <span style={{ margin: '0 8px', color: '#d1d5db' }}>·</span>
-            {formattedDate} at {formattedTime}
+            {formattedDate} à {formattedTime}
           </div>
           {item.detections?.length > 0 && (
             <div style={{ marginTop: 4, fontSize: 12, color: '#9ca3af', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -78,7 +78,7 @@ function DiagnosisCard({ item }) {
         <div style={{ borderTop: `1px solid ${diag.border}`, padding: '16px 20px', background: '#fafafa' }}>
           {item.detections?.length > 0 && (
             <div style={{ marginBottom: 16 }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: '#374151', marginBottom: 8 }}>🔍 Detected Issues</div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: '#374151', marginBottom: 8 }}>🔍 Problèmes détectés</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {item.detections.map((d, i) => (
                   <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#fff', borderRadius: 8, padding: '8px 12px', border: '1px solid #e5e7eb' }}>
@@ -121,7 +121,7 @@ function DiagnosisCard({ item }) {
             </div>
           )}
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', fontSize: 11, color: '#9ca3af', paddingTop: 10, borderTop: '1px solid #e5e7eb' }}>
-            <span>Model: {item.model_version}</span>
+            <span>Modèle: {item.model_version}</span>
             <span>ID: {item.request_id?.slice(0, 8)}...</span>
             <span>{item.inference_time_ms}ms</span>
           </div>
@@ -148,7 +148,7 @@ export default function HistoryPage() {
       setItems(data.data || []);
       setTotal(data.total || 0);
     } catch {
-      setError('Could not load history.');
+      setError('Impossible de charger l\'historique.');
     } finally {
       setLoading(false);
     }
@@ -161,11 +161,11 @@ export default function HistoryPage() {
   const totalPages = Math.ceil(total / LIMIT);
 
   const FILTERS = [
-    { id: 'all',      label: 'All' },
-    { id: 'healthy',  label: '✅ Healthy' },
-    { id: 'diseased', label: '🦠 Diseased' },
-    { id: 'rotten',   label: '🔴 Rotten' },
-    { id: 'mixed',    label: '⚠️ Mixed' },
+    { id: 'all',      label: 'Tous' },
+    { id: 'healthy',  label: '✅ Sain' },
+    { id: 'diseased', label: '🦠 Malade' },
+    { id: 'rotten',   label: '🔴 Pourri' },
+    { id: 'mixed',    label: '⚠️ Mixte' },
   ];
 
   return (
@@ -175,9 +175,9 @@ export default function HistoryPage() {
 
       {/* Header */}
       <div style={{ padding: '48px 20px 20px', background: 'linear-gradient(135deg, #166534, #16a34a)' }}>
-        <h1 style={{ color: '#fff', fontSize: 24, fontWeight: 800, margin: '0 0 4px' }}>Scan History</h1>
+        <h1 style={{ color: '#fff', fontSize: 24, fontWeight: 800, margin: '0 0 4px' }}>Historique des Scans</h1>
         <p style={{ color: '#86efac', fontSize: 13 }}>
-          {total > 0 ? `${total} diagnosis${total > 1 ? 'es' : ''} recorded` : 'No scans yet'}
+          {total > 0 ? `${total} diagnostic${total > 1 ? 's' : ''} enregistré${total > 1 ? 's' : ''}` : 'Aucun scan pour l\'instant'}
         </p>
       </div>
 
@@ -215,9 +215,9 @@ export default function HistoryPage() {
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
             style={{ background: '#fff', borderRadius: 24, padding: '60px 32px', textAlign: 'center', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
             <div style={{ fontSize: 52, marginBottom: 16 }}>🔬</div>
-            <div style={{ fontWeight: 700, color: '#1e293b', fontSize: 17, marginBottom: 8 }}>No diagnoses yet</div>
+            <div style={{ fontWeight: 700, color: '#1e293b', fontSize: 17, marginBottom: 8 }}>Aucun diagnostic pour l'instant</div>
             <div style={{ color: '#94a3b8', fontSize: 14 }}>
-              {filter !== 'all' ? `No ${filter} results found.` : 'Go scan your first apple!'}
+              {filter !== 'all' ? `Aucun résultat "${filter}" trouvé.` : 'Allez scanner votre première pomme !'}
             </div>
           </motion.div>
         )}
@@ -236,9 +236,9 @@ export default function HistoryPage() {
         {/* Pagination */}
         {totalPages > 1 && !loading && (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, marginTop: 24 }}>
-            <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} style={paginationBtn(page === 1)}>← Prev</button>
-            <span style={{ color: '#64748b', fontSize: 14, fontWeight: 500 }}>Page {page} of {totalPages}</span>
-            <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} style={paginationBtn(page === totalPages)}>Next →</button>
+            <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} style={paginationBtn(page === 1)}>← Précédent</button>
+            <span style={{ color: '#64748b', fontSize: 14, fontWeight: 500 }}>Page {page} sur {totalPages}</span>
+            <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} style={paginationBtn(page === totalPages)}>Suivant →</button>
           </div>
         )}
       </div>

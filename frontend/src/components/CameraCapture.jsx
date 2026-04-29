@@ -26,7 +26,7 @@ const CameraCapture = forwardRef(function CameraCapture({ onCapture, onError }, 
         videoRef.current.onloadedmetadata = () => setReady(true);
       }
     } catch (err) {
-      onError?.('Camera not accessible. Use the upload button instead.');
+      onError?.('Caméra inaccessible. Utilisez le bouton d\'importation à la place.');
     }
   }
 
@@ -56,7 +56,7 @@ const CameraCapture = forwardRef(function CameraCapture({ onCapture, onError }, 
       {flash && <div style={{ position: 'absolute', inset: 0, background: '#fff', opacity: 0.7, pointerEvents: 'none', zIndex: 10 }} />}
       {!ready && (
         <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#000' }}>
-          <div style={{ color: '#4ade80', fontSize: 14 }}>Starting camera...</div>
+          <div style={{ color: '#4ade80', fontSize: 14 }}>Démarrage de la caméra...</div>
         </div>
       )}
       <canvas ref={canvasRef} style={{ display: 'none' }} />
