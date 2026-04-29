@@ -38,7 +38,7 @@ export default function DiagnosePage() {
         img.src = url;
         await new Promise(resolve => { img.onload = resolve; });
         const predictions = await modelRef.current.detect(img);
-        const hasApple = predictions.some(p => p.class === 'apple' && p.score > 0.3);
+        const hasApple = predictions.some(p => p.class === 'apple' && p.score > 0.15);
         if (!hasApple) {
           setNoApple(true);        // show popup
           setCameraKey(k => k + 1); // restart camera stream
@@ -152,8 +152,13 @@ export default function DiagnosePage() {
                     </div>
                     <motion.button whileTap={{ scale: 0.96 }}
                       onClick={() => setNoApple(false)}
-                      style={{ width: '100%', padding: '15px', background: 'linear-gradient(135deg, #166534, #22c55e)', color: '#fff', border: 'none', borderRadius: 16, fontSize: 15, fontWeight: 700, cursor: 'pointer', boxShadow: '0 6px 20px rgba(22,163,74,0.35)' }}>
+                      style={{ width: '100%', padding: '15px', background: 'linear-gradient(135deg, #166534, #22c55e)', color: '#fff', border: 'none', borderRadius: 16, fontSize: 15, fontWeight: 700, cursor: 'pointer', boxShadow: '0 6px 20px rgba(22,163,74,0.35)', marginBottom: 10 }}>
                       📷 Prendre une autre photo
+                    </motion.button>
+                    <motion.button whileTap={{ scale: 0.96 }}
+                      onClick={() => { setNoApple(false); setPhase('preview'); }}
+                      style={{ width: '100%', padding: '13px', background: 'transparent', color: '#6b7280', border: '1.5px solid #e5e7eb', borderRadius: 16, fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>
+                      Continuer quand même →
                     </motion.button>
                   </motion.div>
                 </motion.div>
