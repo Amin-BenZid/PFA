@@ -4,8 +4,8 @@ import { motion } from 'framer-motion';
 export default function BottomNav() {
   const { pathname } = useLocation();
   const tabs = [
-    { path: '/', label: 'Scan', icon: <CamIcon /> },
-    { path: '/history', label: 'History', icon: <ClockIcon /> },
+    { path: '/', label: 'Scanner', icon: <CamIcon /> },
+    { path: '/history', label: 'Historique', icon: <ClockIcon /> },
   ];
   return (
     <nav style={{
