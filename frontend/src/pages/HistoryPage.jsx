@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { getHistory } from '../services/api';
-import { getTreatment, URGENCY_COLORS } from '../services/treatments';
+import { getTreatmentByClass, URGENCY_COLORS } from '../services/treatments';
 
 const DIAGNOSIS_META = {
   healthy:  { icon: '✅', label: 'Healthy',  color: '#16a34a', bg: '#dcfce7', border: '#86efac' },
@@ -21,8 +21,7 @@ function DiagnosisCard({ item }) {
   const [expanded, setExpanded] = useState(false);
   const diag = DIAGNOSIS_META[item.overall_diagnosis] || DIAGNOSIS_META.healthy;
   const sev  = SEVERITY_META[item.severity] || SEVERITY_META.none;
-  const treatment = getTreatment(item.recommended_treatment_id);
-  const urgency = treatment ? URGENCY_COLORS[treatment.urgency] : null;
+  const diseases = (item.detections || []).filter(d => d.class !== 'Fresh');
 
   const date = new Date(item.createdAt);
   const formattedDate = date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
@@ -51,11 +50,15 @@ function DiagnosisCard({ item }) {
             <span style={{ background: diag.bg, color: diag.color, padding: '3px 10px', borderRadius: 20, fontSize: 12, fontWeight: 700 }}>
               {diag.icon} {diag.label}
             </span>
-            {urgency && (
-              <span style={{ background: urgency.bg, color: urgency.text, padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600 }}>
-                {urgency.label}
-              </span>
-            )}
+            {diseases.length > 0 && (() => {
+              const t = getTreatmentByClass(diseases[0].class);
+              const urg = t ? URGENCY_COLORS[t.urgency] : null;
+              return urg ? (
+                <span style={{ background: urg.bg, color: urg.text, padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600 }}>
+                  {urg.label}
+                </span>
+              ) : null;
+            })()}
           </div>
           <div style={{ marginTop: 4, fontSize: 13, color: '#6b7280' }}>
             Severity: <span style={{ color: sev.color, fontWeight: 600 }}>{sev.label}</span>
@@ -91,17 +94,30 @@ function DiagnosisCard({ item }) {
               </div>
             </div>
           )}
-          {treatment && (
-            <div style={{ marginBottom: 16 }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: '#374151', marginBottom: 8 }}>💊 {treatment.name_fr}</div>
-              <ol style={{ margin: 0, paddingLeft: 18, display: 'flex', flexDirection: 'column', gap: 4 }}>
-                {treatment.steps.map((step, i) => (
-                  <li key={i} style={{ color: '#4b5563', fontSize: 13, lineHeight: 1.5 }}>{step}</li>
-                ))}
-              </ol>
-              <div style={{ marginTop: 10, background: '#f0fdf4', borderRadius: 8, padding: 10, borderLeft: '3px solid #16a34a', fontSize: 12, color: '#374151' }}>
-                <strong style={{ color: '#166534' }}>🛡️ Prevention: </strong>{treatment.prevention}
-              </div>
+          {diseases.length > 0 && (
+            <div style={{ marginBottom: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: '#374151' }}>💊 Plans de traitement</div>
+              {diseases.map((d, i) => {
+                const t = getTreatmentByClass(d.class);
+                if (!t) return null;
+                const urg = URGENCY_COLORS[t.urgency];
+                return (
+                  <div key={i} style={{ background: '#fff', borderRadius: 10, border: '1px solid #e5e7eb', overflow: 'hidden' }}>
+                    <div style={{ padding: '10px 12px', background: '#fafafa', borderBottom: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontWeight: 700, fontSize: 13, color: '#1f2937' }}>{d.class}</span>
+                      {urg && <span style={{ background: urg.bg, color: urg.text, fontSize: 10, fontWeight: 700, padding: '3px 10px', borderRadius: 20 }}>{urg.label}</span>}
+                    </div>
+                    <ol style={{ margin: 0, padding: '10px 10px 10px 28px', display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      {t.steps.map((step, j) => (
+                        <li key={j} style={{ color: '#4b5563', fontSize: 12, lineHeight: 1.5 }}>{step}</li>
+                      ))}
+                    </ol>
+                    <div style={{ margin: '0 10px 10px', background: '#f0fdf4', borderRadius: 8, padding: 8, borderLeft: '3px solid #16a34a', fontSize: 11, color: '#374151' }}>
+                      <strong style={{ color: '#166534' }}>🛡️ Prévention: </strong>{t.prevention}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', fontSize: 11, color: '#9ca3af', paddingTop: 10, borderTop: '1px solid #e5e7eb' }}>
