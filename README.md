@@ -1,99 +1,92 @@
-# 🍎 Apple Disease & Rot Detection — PFA Project
+# 🍎 Apple Doctor — Détection de Maladies du Pommier
 
-> **Détection de pommes pourries et diagnostic des maladies du pommier à l'aide de l'IA**
-
-A web application for farmers to detect apple rot and diagnose apple tree diseases via photos, with AI-powered treatment recommendations.
+> Application mobile-first permettant aux agriculteurs de détecter les maladies des pommes par photo et d'obtenir des recommandations de traitement en temps réel.
 
 ---
 
-## 👥 Team
+## 👥 Équipe
 
-| Member | Role | Track |
-|--------|------|-------|
-| Amine Benzid | Full-Stack & Cloud Engineering | Track B (Backend, Frontend, AWS, DevOps) |
-| Yacine Mechri   | AI Engineering                 | Track A (Dataset, YOLO, TensorFlow) |
-
----
-
-## 🛠️ Tech Stack
-
-- **AI / ML:** Python, YOLOv8 (Ultralytics), TensorFlow, OpenCV
-- **Backend:** Node.js, Express, MongoDB (Atlas)
-- **Frontend:** React, Vite, Tailwind CSS
-- **Cloud:** Amazon Web Services (S3, ECR, App Runner / SageMaker, IAM)
-- **DevOps:** Docker, GitHub Actions
+| Membre | Rôle |
+|--------|------|
+| Amine Benzid | Full-Stack & Cloud Engineering |
+| Yacine Mechri | AI Engineering (YOLOv8) |
 
 ---
 
-## 📂 Project Structure
+## 🛠️ Stack Technique
+
+- **IA / ML:** Python, YOLOv8 (Ultralytics), Hugging Face Spaces, FastAPI
+- **Backend:** Node.js, Express, MongoDB Atlas
+- **Frontend:** React, Vite, Framer Motion
+- **Cloud:** AWS (S3, CloudFront, EC2, IAM)
+- **Monitoring:** Prometheus, Grafana
+- **DevOps:** GitHub Actions CI/CD, Jest, Vitest
+
+---
+
+## 📂 Structure du Projet
 
 ```
 PFA/
-├── ai-model/          # Python YOLO + TensorFlow training & inference
-├── backend/           # Node.js Express REST API
-├── frontend/          # React web app
-├── infrastructure/    # AWS configs, Dockerfiles, deploy scripts
-├── .github/workflows/ # CI/CD pipelines
-├── docs/              # API contract, diagrams, PFA report
-└── scripts/           # Utility scripts
+├── ai-model/          # Entraînement YOLOv8 (Python)
+├── backend/           # API REST Node.js + Express
+│   └── __tests__/     # Tests Jest
+├── frontend/          # Application React
+│   └── src/test/      # Tests Vitest
+├── infrastructure/    # Terraform & scripts AWS
+├── .github/workflows/ # Pipelines CI/CD
+└── scripts/           # Scripts utilitaires
 ```
 
 ---
 
-## 🚀 Getting Started
+## 🚀 Démarrage Rapide
 
-### Prerequisites
-- Python 3.10+
+### Prérequis
 - Node.js 20+
-- Docker Desktop
-- AWS CLI configured
-- Git
+- Python 3.10+
+- AWS CLI configuré
 
-### Quick Start
+### Backend
 ```bash
-# Clone the repo
-git clone <repo-url>
-cd PFA
-
-# AI Model (Track A)
-cd ai-model
-python -m venv venv
-source venv/bin/activate  # or venv\Scripts\activate on Windows
-pip install -r requirements.txt
-
-# Backend (Track B)
-cd ../backend
+cd backend
 npm install
-cp .env.example .env  # fill in your secrets
+cp .env.example .env
+npm run dev
+```
 
-# Frontend (Track B)
-cd ../frontend
+### Frontend
+```bash
+cd frontend
 npm install
 npm run dev
 ```
 
 ---
 
-## 📜 Documentation
+## 🧪 Tests
 
-- [API Contract](docs/api-contract.md) — AI ↔ Backend integration spec
-- [Architecture](docs/diagrams/) — System diagrams
-- [PFA Report](docs/) — Final report (in progress)
+```bash
+# Backend
+cd backend && npm test
 
----
-
-## 📅 Roadmap
-
-| Phase | Focus | Owner | Status |
-|-------|-------|-------|--------|
-| 1 | Dataset & AI Model Training | Track A | 🟡 In progress |
-| 2 | Backend API | Track B | 🔘 Not started |
-| 3 | Frontend | Track B | 🔘 Not started |
-| 4 | AWS Integration | Both | 🔘 Not started |
-| 5 | DevOps Pipeline | Track B | 🔘 Not started |
+# Frontend
+cd frontend && npm test
+```
 
 ---
 
-## 📄 License
+## 🌍 Déploiement
 
-Academic project — EPI (PFA 2025-2026).
+| Service | URL |
+|---------|-----|
+| Application | https://d3j1y3kiqalty4.cloudfront.net |
+| API | https://apple-doctor.duckdns.org/api |
+| Monitoring | https://apple-doctor.duckdns.org/grafana |
+| IA (HF) | https://aminebenzid-apple-doctor-ai.hf.space |
+
+---
+
+## 📄 Licence
+
+Projet académique — EPI (PFA 2025-2026).
