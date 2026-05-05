@@ -29,4 +29,4 @@ ipykernel==6.29.0
 tqdm==4.66.2
 
 # Experiment tracking (optional but recommended)
-wandb==0.16.3
+wandb==0.26.1
