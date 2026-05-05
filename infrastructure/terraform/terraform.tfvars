@@ -1,0 +1,6 @@
+aws_region       = "eu-north-1"
+project_name     = "apple-doctor"
+instance_type    = "t3.micro"
+s3_images_bucket = "apple-disease-uploads"
+ec2_key_name     = "apple-doctor-key"
+mongodb_uri      = "mongodb+srv://pfa:pfa@cluster0.9cubn6w.mongodb.net/?appName=Cluster0"
