@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\DELL\\\\Desktop\\\\PFA\" -Force)",
+      "Bash(Format-Table -AutoSize)",
+      "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\DELL\\\\Desktop\\\\PFA\\\\backend\" -Force | Where-Object {$_.Name -ne 'node_modules'} | Format-Table -AutoSize Name, PSIsContainer)",
+      "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\DELL\\\\Desktop\\\\PFA\\\\frontend\" -Force | Where-Object {$_.Name -ne 'node_modules'} | Format-Table -AutoSize Name, PSIsContainer)",
+      "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\DELL\\\\Desktop\\\\PFA\\\\backend\\\\src\" -Recurse | Select-Object -ExpandProperty FullName | ForEach-Object { $_ -replace [regex]::Escape\\(\"C:\\\\Users\\\\DELL\\\\Desktop\\\\PFA\"\\), \"PFA\" })"
+    ]
+  }
+}

@@ -29,7 +29,8 @@ jobs:
 
   deploy:
     runs-on: ubuntu-latest
-    needs: test
+    needs: [test]
+    if: github.ref == 'refs/heads/main'
     steps:
       - name: SSH and deploy
         uses: appleboy/ssh-action@v1
