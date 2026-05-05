@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Apple Doctor — AWS Architecture</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #232F3E; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+</style>
+</head>
+<body>
+<svg width="1400" height="860" viewBox="0 0 1400 860" xmlns="http://www.w3.org/2000/svg" style="display:block">
+  <defs>
+    <!-- Arrow marker -->
+    <marker id="arrow" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#FF9900"/>
+    </marker>
+    <marker id="arrow-white" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#aaaaaa"/>
+    </marker>
+    <marker id="arrow-blue" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#4FC3F7"/>
+    </marker>
+    <marker id="arrow-green" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#66BB6A"/>
+    </marker>
+    <!-- Glow filter -->
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="shadow">
+      <feDropShadow dx="2" dy="2" stdDeviation="4" flood-color="#000000" flood-opacity="0.4"/>
+    </filter>
+  </defs>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- BACKGROUND                                          -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <rect width="1400" height="860" fill="#232F3E"/>
+  <!-- Subtle grid -->
+  <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+    <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#2D3748" stroke-width="0.5"/>
+  </pattern>
+  <rect width="1400" height="860" fill="url(#grid)" opacity="0.5"/>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- TITLE                                               -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <text x="700" y="42" text-anchor="middle" font-family="'Segoe UI', Arial, sans-serif" font-size="26" font-weight="bold" fill="#FF9900" filter="url(#glow)">🍎 Apple Doctor — Cloud Architecture</text>
+  <text x="700" y="62" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" fill="#8a9bb0">Production Infrastructure on AWS</text>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- AWS CLOUD BOUNDARY                                  -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <rect x="130" y="80" width="940" height="740" rx="18" fill="#1a2332" stroke="#FF9900" stroke-width="2" stroke-dasharray="14,6" opacity="0.9"/>
+  <!-- AWS logo badge -->
+  <rect x="130" y="70" width="130" height="30" rx="6" fill="#FF9900"/>
+  <text x="195" y="90" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#232F3E">☁ AWS Cloud</text>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- INTERNET / USERS (LEFT)                             -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- Users box -->
+  <rect x="14" y="190" width="100" height="100" rx="12" fill="#2D3748" stroke="#546E7A" stroke-width="1.5" filter="url(#shadow)"/>
+  <!-- Person icon -->
+  <circle cx="64" cy="220" r="14" fill="none" stroke="#90A4AE" stroke-width="2.5"/>
+  <path d="M 40 262 Q 40 240 64 240 Q 88 240 88 262" fill="none" stroke="#90A4AE" stroke-width="2.5"/>
+  <text x="64" y="285" text-anchor="middle" font-family="Arial" font-size="12" font-weight="bold" fill="#CFD8DC">Farmers</text>
+  <text x="64" y="300" text-anchor="middle" font-family="Arial" font-size="10" fill="#78909C">Mobile / Web</text>
+
+  <!-- Developer box -->
+  <rect x="14" y="420" width="100" height="100" rx="12" fill="#2D3748" stroke="#546E7A" stroke-width="1.5" filter="url(#shadow)"/>
+  <circle cx="64" cy="450" r="14" fill="none" stroke="#90A4AE" stroke-width="2.5"/>
+  <path d="M 40 492 Q 40 470 64 470 Q 88 470 88 492" fill="none" stroke="#90A4AE" stroke-width="2.5"/>
+  <!-- Code brackets -->
+  <text x="50" y="478" font-family="monospace" font-size="14" fill="#FF9900">&lt;/&gt;</text>
+  <text x="64" y="515" text-anchor="middle" font-family="Arial" font-size="12" font-weight="bold" fill="#CFD8DC">Dev Team</text>
+  <text x="64" y="530" text-anchor="middle" font-family="Arial" font-size="10" fill="#78909C">Push to main</text>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- FRONTEND LAYER                                      -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- Layer label -->
+  <text x="660" y="108" text-anchor="middle" font-family="Arial" font-size="11" fill="#546E7A" letter-spacing="2">FRONTEND DELIVERY</text>
+  <line x1="200" y1="113" x2="490" y2="113" stroke="#546E7A" stroke-width="0.8" stroke-dasharray="4,3"/>
+  <line x1="830" y1="113" x2="1060" y2="113" stroke="#546E7A" stroke-width="0.8" stroke-dasharray="4,3"/>
+
+  <!-- CloudFront -->
+  <rect x="200" y="130" width="130" height="130" rx="14" fill="#1a1a3e" stroke="#8C4FFF" stroke-width="2" filter="url(#shadow)"/>
+  <rect x="200" y="130" width="130" height="32" rx="14" fill="#8C4FFF"/>
+  <rect x="200" y="148" width="130" height="14" fill="#8C4FFF"/>
+  <text x="265" y="152" text-anchor="middle" font-family="Arial" font-size="11" font-weight="bold" fill="white">Amazon CloudFront</text>
+  <!-- Globe icon -->
+  <circle cx="265" cy="208" r="28" fill="none" stroke="#8C4FFF" stroke-width="2.5"/>
+  <ellipse cx="265" cy="208" rx="14" ry="28" fill="none" stroke="#8C4FFF" stroke-width="1.5"/>
+  <line x1="237" y1="208" x2="293" y2="208" stroke="#8C4FFF" stroke-width="1.5"/>
+  <line x1="242" y1="192" x2="288" y2="192" stroke="#8C4FFF" stroke-width="1"/>
+  <line x1="242" y1="224" x2="288" y2="224" stroke="#8C4FFF" stroke-width="1"/>
+  <text x="265" y="254" text-anchor="middle" font-family="Arial" font-size="11" fill="#B39DDB">CDN • Edge Cache</text>
+
+  <!-- S3 Bucket -->
+  <rect x="380" y="130" width="130" height="130" rx="14" fill="#1a2e1a" stroke="#3F8624" stroke-width="2" filter="url(#shadow)"/>
+  <rect x="380" y="130" width="130" height="32" rx="14" fill="#3F8624"/>
+  <rect x="380" y="148" width="130" height="14" fill="#3F8624"/>
+  <text x="445" y="152" text-anchor="middle" font-family="Arial" font-size="11" font-weight="bold" fill="white">Amazon S3</text>
+  <!-- Bucket icon -->
+  <ellipse cx="445" cy="185" rx="26" ry="8" fill="none" stroke="#3F8624" stroke-width="2.5"/>
+  <line x1="419" y1="185" x2="419" y2="225" stroke="#3F8624" stroke-width="2.5"/>
+  <line x1="471" y1="185" x2="471" y2="225" stroke="#3F8624" stroke-width="2.5"/>
+  <ellipse cx="445" cy="225" rx="26" ry="8" fill="#3F8624" opacity="0.6"/>
+  <path d="M 419 185 Q 445 192 471 185" fill="#3F8624" opacity="0.3"/>
+  <text x="445" y="248" text-anchor="middle" font-family="Arial" font-size="11" fill="#81C784">Static Hosting</text>
+  <text x="445" y="263" text-anchor="middle" font-family="Arial" font-size="10" fill="#66BB6A">React + Vite</text>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- EC2 INSTANCE BOX                                    -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <text x="660" y="305" text-anchor="middle" font-family="Arial" font-size="11" fill="#546E7A" letter-spacing="2">COMPUTE LAYER</text>
+  <line x1="200" y1="310" x2="430" y2="310" stroke="#546E7A" stroke-width="0.8" stroke-dasharray="4,3"/>
+  <line x1="890" y1="310" x2="1060" y2="310" stroke="#546E7A" stroke-width="0.8" stroke-dasharray="4,3"/>
+
+  <!-- EC2 outer box -->
+  <rect x="200" y="320" width="720" height="280" rx="16" fill="#1e2a1e" stroke="#FF9900" stroke-width="2" filter="url(#shadow)"/>
+  <!-- EC2 header -->
+  <rect x="200" y="320" width="720" height="38" rx="16" fill="#FF9900" opacity="0.15"/>
+  <rect x="200" y="340" width="720" height="18" fill="#FF9900" opacity="0.15"/>
+  <!-- EC2 icon small -->
+  <rect x="218" y="328" width="22" height="16" rx="3" fill="#FF9900" opacity="0.8"/>
+  <line x1="221" y1="332" x2="237" y2="332" stroke="#232F3E" stroke-width="1.5"/>
+  <line x1="221" y1="336" x2="237" y2="336" stroke="#232F3E" stroke-width="1.5"/>
+  <line x1="221" y1="340" x2="237" y2="340" stroke="#232F3E" stroke-width="1.5"/>
+  <text x="260" y="344" font-family="Arial" font-size="13" font-weight="bold" fill="#FF9900">Amazon EC2 — Ubuntu 22.04  (eu-north-1)</text>
+  <text x="820" y="344" text-anchor="end" font-family="Arial" font-size="11" fill="#FF9900" opacity="0.7">t3.medium</text>
+
+  <!-- NGINX box inside EC2 -->
+  <rect x="225" y="372" width="155" height="110" rx="10" fill="#1a2030" stroke="#4FC3F7" stroke-width="1.8"/>
+  <rect x="225" y="372" width="155" height="28" rx="10" fill="#4FC3F7" opacity="0.2"/>
+  <rect x="225" y="388" width="155" height="12" fill="#4FC3F7" opacity="0.2"/>
+  <!-- Nginx N logo simplified -->
+  <text x="237" y="394" font-family="Arial" font-size="14" font-weight="bold" fill="#4FC3F7">N</text>
+  <text x="302" y="394" text-anchor="middle" font-family="Arial" font-size="12" font-weight="bold" fill="#4FC3F7">Nginx</text>
+  <text x="302" y="415" text-anchor="middle" font-family="Arial" font-size="10" fill="#81D4FA">Reverse Proxy</text>
+  <text x="302" y="430" text-anchor="middle" font-family="Arial" font-size="10" fill="#81D4FA">SSL Termination</text>
+  <text x="302" y="445" text-anchor="middle" font-family="Arial" font-size="10" fill="#81D4FA">Rate Limiting</text>
+  <text x="302" y="462" text-anchor="middle" font-family="Arial" font-size="10" fill="#546E7A">:443 / :80</text>
+  <text x="302" y="476" text-anchor="middle" font-family="Arial" font-size="10" fill="#4FC3F7">DuckDNS + Certbot</text>
+
+  <!-- Node.js API box inside EC2 -->
+  <rect x="400" y="372" width="185" height="110" rx="10" fill="#1a2030" stroke="#66BB6A" stroke-width="1.8"/>
+  <rect x="400" y="372" width="185" height="28" rx="10" fill="#66BB6A" opacity="0.2"/>
+  <rect x="400" y="388" width="185" height="12" fill="#66BB6A" opacity="0.2"/>
+  <!-- Node hexagon -->
+  <polygon points="415,380 423,376 431,380 431,388 423,392 415,388" fill="#66BB6A" opacity="0.8"/>
+  <text x="492" y="394" text-anchor="middle" font-family="Arial" font-size="12" font-weight="bold" fill="#66BB6A">Node.js + Express</text>
+  <text x="492" y="415" text-anchor="middle" font-family="Arial" font-size="10" fill="#A5D6A7">REST API</text>
+  <text x="492" y="430" text-anchor="middle" font-family="Arial" font-size="10" fill="#A5D6A7">Image Processing</text>
+  <text x="492" y="445" text-anchor="middle" font-family="Arial" font-size="10" fill="#A5D6A7">Auth Middleware</text>
+  <text x="492" y="462" text-anchor="middle" font-family="Arial" font-size="10" fill="#546E7A">PM2 Process</text>
+  <text x="492" y="476" text-anchor="middle" font-family="Arial" font-size="10" fill="#66BB6A">:3000</text>
+
+  <!-- Prometheus box inside EC2 -->
+  <rect x="605" y="372" width="140" height="110" rx="10" fill="#1a2030" stroke="#E64A19" stroke-width="1.8"/>
+  <rect x="605" y="372" width="140" height="28" rx="10" fill="#E64A19" opacity="0.2"/>
+  <rect x="605" y="388" width="140" height="12" fill="#E64A19" opacity="0.2"/>
+  <!-- Prometheus flame icon simplified -->
+  <path d="M 620 390 Q 625 382 630 390 Q 632 384 635 390" fill="none" stroke="#E64A19" stroke-width="1.5"/>
+  <text x="675" y="394" text-anchor="middle" font-family="Arial" font-size="12" font-weight="bold" fill="#E64A19">Prometheus</text>
+  <text x="675" y="415" text-anchor="middle" font-family="Arial" font-size="10" fill="#FFAB91">Metrics Scraping</text>
+  <text x="675" y="430" text-anchor="middle" font-family="Arial" font-size="10" fill="#FFAB91">node_exporter</text>
+  <text x="675" y="445" text-anchor="middle" font-family="Arial" font-size="10" fill="#FFAB91">Time Series DB</text>
+  <text x="675" y="462" text-anchor="middle" font-family="Arial" font-size="10" fill="#546E7A">:9090</text>
+
+  <!-- Grafana box inside EC2 -->
+  <rect x="760" y="372" width="140" height="110" rx="10" fill="#1a2030" stroke="#F57C00" stroke-width="1.8"/>
+  <rect x="760" y="372" width="140" height="28" rx="10" fill="#F57C00" opacity="0.2"/>
+  <rect x="760" y="388" width="140" height="12" fill="#F57C00" opacity="0.2"/>
+  <!-- Grafana G icon -->
+  <circle cx="775" cy="386" r="8" fill="none" stroke="#F57C00" stroke-width="1.5"/>
+  <path d="M 775 386 L 783 386 L 783 380" fill="none" stroke="#F57C00" stroke-width="1.5"/>
+  <text x="830" y="394" text-anchor="middle" font-family="Arial" font-size="12" font-weight="bold" fill="#F57C00">Grafana</text>
+  <text x="830" y="415" text-anchor="middle" font-family="Arial" font-size="10" fill="#FFCC80">Dashboards</text>
+  <text x="830" y="430" text-anchor="middle" font-family="Arial" font-size="10" fill="#FFCC80">Alerting Rules</text>
+  <text x="830" y="445" text-anchor="middle" font-family="Arial" font-size="10" fill="#FFCC80">CPU / RAM / Disk</text>
+  <text x="830" y="462" text-anchor="middle" font-family="Arial" font-size="10" fill="#546E7A">:3001</text>
+
+  <!-- PM2 badge -->
+  <rect x="225" y="498" width="155" height="30" rx="8" fill="#1a2030" stroke="#9C27B0" stroke-width="1.5"/>
+  <text x="302" y="518" text-anchor="middle" font-family="Arial" font-size="11" font-weight="bold" fill="#CE93D8">⚙ PM2 Process Manager</text>
+
+  <!-- SSL Badge -->
+  <rect x="400" y="498" width="185" height="30" rx="8" fill="#1a2030" stroke="#00BCD4" stroke-width="1.5"/>
+  <text x="492" y="518" text-anchor="middle" font-family="Arial" font-size="11" font-weight="bold" fill="#80DEEA">🔒 SSL via Certbot / Let's Encrypt</text>
+
+  <!-- Email alert badge -->
+  <rect x="605" y="498" width="295" height="30" rx="8" fill="#1a2030" stroke="#F57C00" stroke-width="1.5"/>
+  <text x="752" y="518" text-anchor="middle" font-family="Arial" font-size="11" font-weight="bold" fill="#FFCC80">📧 Email Alerts → Gmail SMTP</text>
+
+  <!-- Node exporter connection line -->
+  <line x1="545" y1="427" x2="605" y2="427" stroke="#E64A19" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arrow)"/>
+  <line x1="745" y1="427" x2="760" y2="427" stroke="#F57C00" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arrow)"/>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- IAM                                                 -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <rect x="970" y="320" width="110" height="120" rx="12" fill="#1e1a2a" stroke="#DD344C" stroke-width="2" filter="url(#shadow)"/>
+  <rect x="970" y="320" width="110" height="30" rx="12" fill="#DD344C" opacity="0.25"/>
+  <rect x="970" y="338" width="110" height="12" fill="#DD344C" opacity="0.25"/>
+  <!-- Shield icon -->
+  <path d="M 1025 358 L 1010 363 L 1010 378 Q 1010 392 1025 398 Q 1040 392 1040 378 L 1040 363 Z" fill="none" stroke="#DD344C" stroke-width="2.5"/>
+  <text x="1025" y="380" text-anchor="middle" font-family="Arial" font-size="9" fill="#DD344C">IAM</text>
+  <text x="1025" y="335" text-anchor="middle" font-family="Arial" font-size="10" font-weight="bold" fill="#EF9A9A">AWS IAM</text>
+  <text x="1025" y="412" text-anchor="middle" font-family="Arial" font-size="10" fill="#EF9A9A">Least Privilege</text>
+  <text x="1025" y="428" text-anchor="middle" font-family="Arial" font-size="10" fill="#EF9A9A">Access Control</text>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- EXTERNAL SERVICES (RIGHT SIDE)                      -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- External zone -->
+  <rect x="1110" y="80" width="260" height="740" rx="14" fill="#1a2030" stroke="#546E7A" stroke-width="1.5" stroke-dasharray="8,5" opacity="0.8"/>
+  <text x="1240" y="108" text-anchor="middle" font-family="Arial" font-size="13" font-weight="bold" fill="#78909C">External Services</text>
+
+  <!-- MongoDB Atlas -->
+  <rect x="1130" y="125" width="220" height="140" rx="12" fill="#0d1f0d" stroke="#13AA52" stroke-width="2" filter="url(#shadow)"/>
+  <rect x="1130" y="125" width="220" height="34" rx="12" fill="#13AA52" opacity="0.25"/>
+  <rect x="1130" y="147" width="220" height="12" fill="#13AA52" opacity="0.25"/>
+  <!-- MongoDB leaf icon -->
+  <path d="M 1148 158 Q 1145 170 1148 182 Q 1155 175 1155 165 Z" fill="#13AA52"/>
+  <text x="1240" y="148" text-anchor="middle" font-family="Arial" font-size="12" font-weight="bold" fill="#4CAF50">MongoDB Atlas</text>
+  <text x="1240" y="175" text-anchor="middle" font-family="Arial" font-size="11" fill="#81C784">Cloud Database</text>
+  <text x="1240" y="193" text-anchor="middle" font-family="Arial" font-size="10" fill="#66BB6A">Diagnosis History</text>
+  <text x="1240" y="210" text-anchor="middle" font-family="Arial" font-size="10" fill="#66BB6A">Image Metadata</text>
+  <text x="1240" y="228" text-anchor="middle" font-family="Arial" font-size="10" fill="#546E7A">M0 Free Tier</text>
+  <text x="1240" y="253" text-anchor="middle" font-family="Arial" font-size="10" fill="#13AA52">cloud.mongodb.com</text>
+
+  <!-- Hugging Face Spaces -->
+  <rect x="1130" y="295" width="220" height="160" rx="12" fill="#1f1a0d" stroke="#FFD21E" stroke-width="2" filter="url(#shadow)"/>
+  <rect x="1130" y="295" width="220" height="34" rx="12" fill="#FFD21E" opacity="0.2"/>
+  <rect x="1130" y="317" width="220" height="12" fill="#FFD21E" opacity="0.2"/>
+  <!-- HF face emoji area -->
+  <circle cx="1152" cy="313" r="10" fill="#FFD21E" opacity="0.6"/>
+  <text x="1148" y="318" font-family="Arial" font-size="12">🤗</text>
+  <text x="1240" y="318" text-anchor="middle" font-family="Arial" font-size="12" font-weight="bold" fill="#FFD21E">Hugging Face Spaces</text>
+  <text x="1240" y="342" text-anchor="middle" font-family="Arial" font-size="11" fill="#FFF176">FastAPI Inference</text>
+  <text x="1240" y="360" text-anchor="middle" font-family="Arial" font-size="10" fill="#FFF59D">YOLOv8 Detection</text>
+  <text x="1240" y="378" text-anchor="middle" font-family="Arial" font-size="10" fill="#FFF59D">9 Disease Classes</text>
+  <text x="1240" y="396" text-anchor="middle" font-family="Arial" font-size="10" fill="#FFF59D">Docker Runtime</text>
+  <text x="1240" y="414" text-anchor="middle" font-family="Arial" font-size="10" fill="#546E7A">aminebenzid.hf.space</text>
+  <text x="1240" y="444" text-anchor="middle" font-family="Arial" font-size="10" fill="#FFD21E">Python 3.10 + Ultralytics</text>
+
+  <!-- GitHub Actions -->
+  <rect x="1130" y="480" width="220" height="160" rx="12" fill="#1a1a1a" stroke="#6E40C9" stroke-width="2" filter="url(#shadow)"/>
+  <rect x="1130" y="480" width="220" height="34" rx="12" fill="#6E40C9" opacity="0.25"/>
+  <rect x="1130" y="502" width="220" height="12" fill="#6E40C9" opacity="0.25"/>
+  <!-- GitHub octocat simplified -->
+  <circle cx="1152" cy="498" r="10" fill="#6E40C9" opacity="0.6"/>
+  <text x="1148" y="503" font-family="Arial" font-size="12">⚙</text>
+  <text x="1240" y="503" text-anchor="middle" font-family="Arial" font-size="12" font-weight="bold" fill="#B39DDB">GitHub Actions</text>
+  <text x="1240" y="528" text-anchor="middle" font-family="Arial" font-size="11" fill="#CE93D8">CI/CD Pipeline</text>
+  <text x="1240" y="546" text-anchor="middle" font-family="Arial" font-size="10" fill="#E1BEE7">Push to main → Tests</text>
+  <text x="1240" y="564" text-anchor="middle" font-family="Arial" font-size="10" fill="#E1BEE7">Jest (Backend)</text>
+  <text x="1240" y="582" text-anchor="middle" font-family="Arial" font-size="10" fill="#E1BEE7">Vitest (Frontend)</text>
+  <text x="1240" y="600" text-anchor="middle" font-family="Arial" font-size="10" fill="#E1BEE7">Deploy on Pass</text>
+  <text x="1240" y="630" text-anchor="middle" font-family="Arial" font-size="10" fill="#6E40C9">github.com/actions</text>
+
+  <!-- Gmail -->
+  <rect x="1130" y="665" width="220" height="100" rx="12" fill="#1f0d0d" stroke="#EA4335" stroke-width="2" filter="url(#shadow)"/>
+  <rect x="1130" y="665" width="220" height="30" rx="12" fill="#EA4335" opacity="0.2"/>
+  <rect x="1130" y="683" width="220" height="12" fill="#EA4335" opacity="0.2"/>
+  <text x="1148" y="688" font-family="Arial" font-size="12">📧</text>
+  <text x="1240" y="688" text-anchor="middle" font-family="Arial" font-size="12" font-weight="bold" fill="#EF9A9A">Gmail SMTP</text>
+  <text x="1240" y="712" text-anchor="middle" font-family="Arial" font-size="11" fill="#FFCDD2">Alert Notifications</text>
+  <text x="1240" y="730" text-anchor="middle" font-family="Arial" font-size="10" fill="#FFCDD2">CPU / RAM / Disk</text>
+  <text x="1240" y="748" text-anchor="middle" font-family="Arial" font-size="10" fill="#EF9A9A">smtp.gmail.com:587</text>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- ARROWS                                              -->
+  <!-- ═══════════════════════════════════════════════════ -->
+
+  <!-- Users → CloudFront -->
+  <path d="M 114 240 Q 150 240 200 210" fill="none" stroke="#FF9900" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="155" y="232" font-family="Arial" font-size="10" fill="#FF9900">HTTPS</text>
+
+  <!-- Users → EC2 (via duckdns) -->
+  <path d="M 114 470 Q 150 470 200 470" fill="none" stroke="#aaaaaa" stroke-width="1.5" stroke-dasharray="6,3" marker-end="url(#arrow-white)"/>
+
+  <!-- CloudFront → S3 -->
+  <path d="M 330 195 L 380 195" fill="none" stroke="#3F8624" stroke-width="2" marker-end="url(#arrow-green)"/>
+  <text x="352" y="188" font-family="Arial" font-size="10" fill="#66BB6A">Fetch</text>
+
+  <!-- CloudFront → EC2 (API calls) -->
+  <path d="M 265 260 L 265 320" fill="none" stroke="#4FC3F7" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arrow-blue)"/>
+  <text x="270" y="295" font-family="Arial" font-size="10" fill="#4FC3F7">/api</text>
+
+  <!-- Nginx → Node.js -->
+  <path d="M 380 427 L 400 427" fill="none" stroke="#4FC3F7" stroke-width="2" marker-end="url(#arrow-blue)"/>
+
+  <!-- Node.js → MongoDB -->
+  <path d="M 920 427 Q 1060 427 1130 200" fill="none" stroke="#13AA52" stroke-width="1.8" stroke-dasharray="6,3" marker-end="url(#arrow)"/>
+  <text x="1040" y="370" font-family="Arial" font-size="10" fill="#13AA52">MongoDB</text>
+  <text x="1040" y="383" font-family="Arial" font-size="10" fill="#13AA52">Driver</text>
+
+  <!-- Node.js → HF Spaces -->
+  <path d="M 585 460 Q 850 550 1130 380" fill="none" stroke="#FFD21E" stroke-width="1.8" stroke-dasharray="6,3" marker-end="url(#arrow)"/>
+  <text x="820" y="530" font-family="Arial" font-size="10" fill="#FFD21E">AI Inference</text>
+  <text x="820" y="545" font-family="Arial" font-size="10" fill="#FFD21E">HTTP/JSON</text>
+
+  <!-- GitHub Actions → S3 -->
+  <path d="M 1130 520 Q 1080 520 980 250 Q 950 170 510 170" fill="none" stroke="#6E40C9" stroke-width="1.8" stroke-dasharray="6,3" marker-end="url(#arrow)"/>
+  <text x="970" y="165" font-family="Arial" font-size="10" fill="#B39DDB">Deploy</text>
+
+  <!-- GitHub Actions → EC2 (SSH deploy) -->
+  <path d="M 1130 570 Q 1090 570 980 530 Q 950 520 920 470" fill="none" stroke="#6E40C9" stroke-width="1.8" stroke-dasharray="6,3" marker-end="url(#arrow)"/>
+  <text x="980" y="510" font-family="Arial" font-size="10" fill="#B39DDB">SSH Deploy</text>
+
+  <!-- Grafana → Gmail -->
+  <path d="M 900 510 Q 1050 620 1130 705" fill="none" stroke="#F57C00" stroke-width="1.8" stroke-dasharray="5,3" marker-end="url(#arrow)"/>
+
+  <!-- Dev → GitHub (push) -->
+  <path d="M 114 510 Q 1100 510 1130 540" fill="none" stroke="#6E40C9" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arrow)"/>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- BOTTOM LEGEND                                       -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <rect x="150" y="785" width="900" height="55" rx="10" fill="#1a2030" stroke="#37474F" stroke-width="1"/>
+  <text x="650" y="803" text-anchor="middle" font-family="Arial" font-size="11" font-weight="bold" fill="#78909C">LEGEND</text>
+
+  <!-- Legend items -->
+  <line x1="175" y1="825" x2="215" y2="825" stroke="#FF9900" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="220" y="829" font-family="Arial" font-size="11" fill="#90A4AE">User Traffic</text>
+
+  <line x1="320" y1="825" x2="360" y2="825" stroke="#13AA52" stroke-width="2" stroke-dasharray="5,3" marker-end="url(#arrow)"/>
+  <text x="365" y="829" font-family="Arial" font-size="11" fill="#90A4AE">Data Flow</text>
+
+  <line x1="460" y1="825" x2="500" y2="825" stroke="#6E40C9" stroke-width="2" stroke-dasharray="5,3" marker-end="url(#arrow)"/>
+  <text x="505" y="829" font-family="Arial" font-size="11" fill="#90A4AE">CI/CD Deploy</text>
+
+  <line x1="610" y1="825" x2="650" y2="825" stroke="#F57C00" stroke-width="2" stroke-dasharray="5,3" marker-end="url(#arrow)"/>
+  <text x="655" y="829" font-family="Arial" font-size="11" fill="#90A4AE">Monitoring Alert</text>
+
+  <line x1="775" y1="825" x2="815" y2="825" stroke="#4FC3F7" stroke-width="2" stroke-dasharray="5,3" marker-end="url(#arrow-blue)"/>
+  <text x="820" y="829" font-family="Arial" font-size="11" fill="#90A4AE">Internal Routing</text>
+
+  <!-- Project info -->
+  <text x="700" y="852" text-anchor="middle" font-family="Arial" font-size="11" fill="#546E7A">Apple Doctor — PFA 2025/2026 • Amine Benzid & Yacine Mechri • EPI</text>
+
+</svg>
+</body>
+</html>
