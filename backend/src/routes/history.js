@@ -14,10 +14,19 @@ router.get('/', async (req, res, next) => {
     const skip     = (page - 1) * limit;
 
     // Optional filter by diagnosis type
-    const filter = {};
-    if (req.query.diagnosis) {
-      filter.overall_diagnosis = req.query.diagnosis;
-    }
+  const ALLOWED_DIAGNOSES = ['healthy', 'diseased', 'mixed', 'rotten'];
+
+const filter = {};
+if (req.query.diagnosis) {
+  const diagnosis = String(req.query.diagnosis);
+  if (!ALLOWED_DIAGNOSES.includes(diagnosis)) {
+    return res.status(400).json({
+      status: 'error',
+      error: { code: 'INVALID_PARAM', message: 'Invalid diagnosis filter value' },
+    });
+  }
+  filter.overall_diagnosis = diagnosis;
+}
 
     const [data, total] = await Promise.all([
       Diagnosis.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit).select('-__v'),
