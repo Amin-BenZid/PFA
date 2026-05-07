@@ -1,9 +1,11 @@
 import { useRef, useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 
-const CameraCapture = forwardRef(function CameraCapture({ onCapture, onError }, ref) {
-  const videoRef = useRef(null);
-  const canvasRef = useRef(null);
-  const streamRef = useRef(null);
+const CameraCapture = forwardRef(function CameraCapture({ onCapture, onError, model, onDetectionChange }, ref) {
+  const videoRef   = useRef(null);
+  const canvasRef  = useRef(null);      // hidden canvas for capture
+  const overlayRef = useRef(null);      // visible canvas for bounding boxes
+  const streamRef  = useRef(null);
+  const loopRef    = useRef(null);
   const [flash, setFlash] = useState(false);
   const [ready, setReady] = useState(false);
 
@@ -11,8 +13,17 @@ const CameraCapture = forwardRef(function CameraCapture({ onCapture, onError }, 
 
   useEffect(() => {
     start();
-    return () => stop();
+    return () => {
+      stop();
+      cancelAnimationFrame(loopRef.current);
+    };
   }, []);
+
+  // Start detection loop once video is ready and model available
+  useEffect(() => {
+    if (ready && model) startDetection();
+    return () => cancelAnimationFrame(loopRef.current);
+  }, [ready, model]);
 
   async function start() {
     try {
@@ -25,8 +36,8 @@ const CameraCapture = forwardRef(function CameraCapture({ onCapture, onError }, 
         videoRef.current.play();
         videoRef.current.onloadedmetadata = () => setReady(true);
       }
-    } catch (err) {
-      onError?.('Caméra inaccessible. Utilisez le bouton d\'importation à la place.');
+    } catch {
+      onError?.("Caméra inaccessible. Utilisez le bouton d'importation à la place.");
     }
   }
 
@@ -35,10 +46,80 @@ const CameraCapture = forwardRef(function CameraCapture({ onCapture, onError }, 
     streamRef.current = null;
   }
 
+  function startDetection() {
+    async function detect() {
+      const video   = videoRef.current;
+      const overlay = overlayRef.current;
+      if (!video || !overlay || !model || video.readyState < 2) {
+        loopRef.current = requestAnimationFrame(detect);
+        return;
+      }
+
+      overlay.width  = video.videoWidth  || overlay.clientWidth;
+      overlay.height = video.videoHeight || overlay.clientHeight;
+      const ctx = overlay.getContext('2d');
+      ctx.clearRect(0, 0, overlay.width, overlay.height);
+
+      try {
+        const predictions = await model.detect(video);
+        const apples = predictions.filter(p => p.class === 'apple' && p.score > 0.12);
+
+        apples.forEach(({ bbox, score }) => {
+          const [x, y, w, h] = bbox;
+          const scaleX = overlay.width  / video.videoWidth;
+          const scaleY = overlay.height / video.videoHeight;
+          const rx = x * scaleX, ry = y * scaleY, rw = w * scaleX, rh = h * scaleY;
+
+          // Glow bounding box
+          ctx.strokeStyle = '#4ade80';
+          ctx.lineWidth   = 3;
+          ctx.shadowColor = 'rgba(74,222,128,0.7)';
+          ctx.shadowBlur  = 14;
+          ctx.strokeRect(rx, ry, rw, rh);
+          ctx.shadowBlur  = 0;
+
+          // Corner accents
+          const cs = 18;
+          ctx.strokeStyle = '#22c55e';
+          ctx.lineWidth   = 5;
+          [
+            [rx,      ry,      rx + cs, ry,      rx,      ry + cs],
+            [rx + rw, ry,      rx+rw-cs,ry,      rx + rw, ry + cs],
+            [rx,      ry + rh, rx + cs, ry + rh, rx,      ry+rh-cs],
+            [rx + rw, ry + rh, rx+rw-cs,ry + rh, rx + rw, ry+rh-cs],
+          ].forEach(([x1, y1, x2, y2, x3, y3]) => {
+            ctx.beginPath();
+            ctx.moveTo(x1, y1); ctx.lineTo(x2, y2);
+            ctx.moveTo(x1, y1); ctx.lineTo(x3, y3);
+            ctx.stroke();
+          });
+
+          // Confidence label
+          const label = `🍎 ${Math.round(score * 100)}%`;
+          ctx.font = 'bold 13px Arial';
+          const tw = ctx.measureText(label).width;
+          ctx.fillStyle = 'rgba(22,101,52,0.88)';
+          ctx.beginPath();
+          ctx.roundRect(rx, ry - 28, tw + 16, 26, 6);
+          ctx.fill();
+          ctx.fillStyle = '#fff';
+          ctx.fillText(label, rx + 8, ry - 10);
+        });
+
+        onDetectionChange?.(apples.length);
+      } catch {
+        onDetectionChange?.(0);
+      }
+
+      loopRef.current = requestAnimationFrame(detect);
+    }
+    detect();
+  }
+
   function capture() {
-    const video = videoRef.current;
+    const video  = videoRef.current;
     const canvas = canvasRef.current;
-    canvas.width = video.videoWidth;
+    canvas.width  = video.videoWidth;
     canvas.height = video.videoHeight;
     canvas.getContext('2d').drawImage(video, 0, 0);
     setFlash(true);
@@ -46,6 +127,7 @@ const CameraCapture = forwardRef(function CameraCapture({ onCapture, onError }, 
     canvas.toBlob(blob => {
       onCapture(new File([blob], `capture-${Date.now()}.jpg`, { type: 'image/jpeg' }));
       stop();
+      cancelAnimationFrame(loopRef.current);
     }, 'image/jpeg', 0.92);
   }
 
@@ -53,12 +135,21 @@ const CameraCapture = forwardRef(function CameraCapture({ onCapture, onError }, 
     <>
       <video ref={videoRef} autoPlay playsInline muted
         style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-      {flash && <div style={{ position: 'absolute', inset: 0, background: '#fff', opacity: 0.7, pointerEvents: 'none', zIndex: 10 }} />}
+
+      {/* Live bounding box overlay */}
+      <canvas ref={overlayRef}
+        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 2 }} />
+
+      {flash && (
+        <div style={{ position: 'absolute', inset: 0, background: '#fff', opacity: 0.7, pointerEvents: 'none', zIndex: 10 }} />
+      )}
+
       {!ready && (
-        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#000' }}>
+        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#000', zIndex: 5 }}>
           <div style={{ color: '#4ade80', fontSize: 14 }}>Démarrage de la caméra...</div>
         </div>
       )}
+
       <canvas ref={canvasRef} style={{ display: 'none' }} />
     </>
   );

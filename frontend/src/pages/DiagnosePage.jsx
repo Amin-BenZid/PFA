@@ -12,8 +12,9 @@ export default function DiagnosePage() {
   const [result, setResult]         = useState(null);
   const [error, setError]           = useState(null);
   const [camError, setCamError]     = useState(null);
-  const [noApple, setNoApple]       = useState(false);   // controls the popup
-  const [cameraKey, setCameraKey]   = useState(0);       // forces CameraCapture remount
+  const [noApple, setNoApple]       = useState(false);
+  const [cameraKey, setCameraKey]   = useState(0);
+  const [appleCount, setAppleCount] = useState(0);   // live detection count from camera
   const camRef   = useRef(null);
   const modelRef = useRef(null);
 
@@ -29,6 +30,13 @@ export default function DiagnosePage() {
     setNoApple(false);
     const url = URL.createObjectURL(f);
     setPreview(url);
+
+    // If live detection already confirmed apple → skip re-check
+    if (appleCount > 0) {
+      setPhase('preview');
+      return;
+    }
+
     setPhase('checking');
 
     try {
@@ -37,10 +45,11 @@ export default function DiagnosePage() {
         img.src = url;
         await new Promise(resolve => { img.onload = resolve; });
         const predictions = await modelRef.current.detect(img);
-        const hasApple = predictions.some(p => p.class === 'apple' && p.score > 0.15);
+        const hasApple = predictions.some(p => p.class === 'apple' && p.score > 0.12);
         if (!hasApple) {
-          setNoApple(true);        // show popup
-          setCameraKey(k => k + 1); // restart camera stream
+          setNoApple(true);
+          setCameraKey(k => k + 1);
+          setAppleCount(0);
           setPhase('camera');
           return;
         }
@@ -55,6 +64,7 @@ export default function DiagnosePage() {
   function reset() {
     setFile(null); setPreview(null); setResult(null);
     setError(null); setCamError(null); setNoApple(false);
+    setAppleCount(0);
     setCameraKey(k => k + 1);
     setPhase('camera');
   }
@@ -80,27 +90,43 @@ export default function DiagnosePage() {
           <motion.div key="camera" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             style={{ position: 'absolute', inset: 0 }}>
 
-            <CameraCapture key={cameraKey} ref={camRef} onCapture={handleFile} onError={setCamError} />
+            <CameraCapture
+              key={cameraKey}
+              ref={camRef}
+              onCapture={handleFile}
+              onError={setCamError}
+              model={modelRef.current}
+              onDetectionChange={setAppleCount}
+            />
 
             {/* Top gradient + logo */}
-            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, padding: '48px 24px 80px', background: 'linear-gradient(to bottom, rgba(0,0,0,0.65), transparent)', pointerEvents: 'none' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span style={{ fontSize: 26 }}>🍎</span>
-                <div>
-                  <div style={{ color: '#fff', fontWeight: 700, fontSize: 17, lineHeight: 1.2 }}>Apple Doctor</div>
-                  <div style={{ color: '#4ade80', fontSize: 11 }}>Détection de Maladies par IA</div>
+            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, padding: '48px 24px 80px', background: 'linear-gradient(to bottom, rgba(0,0,0,0.65), transparent)', pointerEvents: 'none', zIndex: 3 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <span style={{ fontSize: 26 }}>🍎</span>
+                  <div>
+                    <div style={{ color: '#fff', fontWeight: 700, fontSize: 17, lineHeight: 1.2 }}>Apple Doctor</div>
+                    <div style={{ color: '#4ade80', fontSize: 11 }}>Détection de Maladies par IA</div>
+                  </div>
                 </div>
+                {/* Live detection badge */}
+                {appleCount > 0 && (
+                  <motion.div
+                    initial={{ scale: 0, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    style={{ background: 'rgba(22,101,52,0.9)', border: '1.5px solid #4ade80', borderRadius: 20, padding: '6px 14px', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#4ade80', boxShadow: '0 0 6px #4ade80' }} />
+                    <span style={{ color: '#fff', fontSize: 12, fontWeight: 700 }}>
+                      {appleCount} pomme{appleCount > 1 ? 's' : ''} détectée{appleCount > 1 ? 's' : ''}
+                    </span>
+                  </motion.div>
+                )}
               </div>
-            </div>
-
-            {/* Apple guide */}
-            <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
-              <AppleGuide />
             </div>
 
             {/* Checking overlay */}
             {phase === 'checking' && (
-              <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.65)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16 }}>
+              <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.65)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16, zIndex: 6 }}>
                 <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
                   style={{ width: 40, height: 40, border: '3px solid rgba(255,255,255,0.2)', borderTop: '3px solid #4ade80', borderRadius: '50%' }} />
                 <div style={{ color: '#fff', fontSize: 15, fontWeight: 600 }}>Vérification de la pomme...</div>
@@ -109,17 +135,40 @@ export default function DiagnosePage() {
 
             {/* Camera error */}
             {camError && (
-              <div style={{ position: 'absolute', top: '50%', left: 24, right: 24, transform: 'translateY(-50%)', background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(10px)', borderRadius: 16, padding: 20, textAlign: 'center', color: '#fca5a5', fontSize: 13 }}>
+              <div style={{ position: 'absolute', top: '50%', left: 24, right: 24, transform: 'translateY(-50%)', background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(10px)', borderRadius: 16, padding: 20, textAlign: 'center', color: '#fca5a5', fontSize: 13, zIndex: 6 }}>
                 {camError}
               </div>
             )}
 
             {/* Bottom controls */}
             {phase === 'camera' && (
-              <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '20px 40px 36px', background: 'linear-gradient(to top, rgba(0,0,0,0.75), transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '20px 40px 36px', background: 'linear-gradient(to top, rgba(0,0,0,0.75), transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 12, zIndex: 3 }}>
+                {appleCount === 0 && (
+                  <motion.div
+                    animate={{ opacity: [0.5, 1, 0.5] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                    style={{ color: 'rgba(255,255,255,0.7)', fontSize: 12, fontWeight: 500 }}>
+                    Pointez vers une pomme...
+                  </motion.div>
+                )}
+                {appleCount > 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    style={{ color: '#4ade80', fontSize: 12, fontWeight: 600 }}>
+                    ✓ Prêt à capturer
+                  </motion.div>
+                )}
                 <motion.button whileTap={{ scale: 0.92 }} onClick={() => camRef.current?.capture()}
-                  style={{ width: 76, height: 76, borderRadius: '50%', background: '#fff', border: '4px solid rgba(255,255,255,0.4)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 0 3px rgba(255,255,255,0.2)' }}>
-                  <div style={{ width: 52, height: 52, borderRadius: '50%', background: '#fff', border: '2px solid #e2e8f0' }} />
+                  style={{
+                    width: 76, height: 76, borderRadius: '50%',
+                    background: appleCount > 0 ? 'linear-gradient(135deg, #166534, #22c55e)' : '#fff',
+                    border: appleCount > 0 ? '4px solid rgba(74,222,128,0.5)' : '4px solid rgba(255,255,255,0.4)',
+                    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    boxShadow: appleCount > 0 ? '0 0 20px rgba(74,222,128,0.5)' : '0 0 0 3px rgba(255,255,255,0.2)',
+                    transition: 'all 0.3s ease'
+                  }}>
+                  <div style={{ width: 52, height: 52, borderRadius: '50%', background: appleCount > 0 ? 'rgba(255,255,255,0.2)' : '#fff', border: '2px solid #e2e8f0' }} />
                 </motion.button>
               </div>
             )}
@@ -129,7 +178,7 @@ export default function DiagnosePage() {
               {noApple && (
                 <motion.div key="noapple"
                   initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                  style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+                  style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, zIndex: 10 }}>
                   <motion.div
                     initial={{ scale: 0.85, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.85, opacity: 0 }}
                     transition={{ type: 'spring', stiffness: 300, damping: 25 }}
@@ -139,12 +188,12 @@ export default function DiagnosePage() {
                       Aucune pomme détectée
                     </div>
                     <div style={{ fontSize: 14, color: '#6b7280', marginBottom: 24, lineHeight: 1.5 }}>
-                      Pointez la caméra directement vers une pomme et assurez-vous qu'elle est bien visible.
+                      Attendez que la caméra encadre une pomme avant de capturer.
                     </div>
                     <motion.button whileTap={{ scale: 0.96 }}
                       onClick={() => setNoApple(false)}
                       style={{ width: '100%', padding: '15px', background: 'linear-gradient(135deg, #166534, #22c55e)', color: '#fff', border: 'none', borderRadius: 16, fontSize: 15, fontWeight: 700, cursor: 'pointer', boxShadow: '0 6px 20px rgba(22,163,74,0.35)', marginBottom: 10 }}>
-                      📷 Prendre une autre photo
+                      📷 Réessayer
                     </motion.button>
                     <motion.button whileTap={{ scale: 0.96 }}
                       onClick={() => { setNoApple(false); setPhase('preview'); }}
@@ -192,7 +241,7 @@ export default function DiagnosePage() {
             <img src={preview} alt="scanning" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.55)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 24 }}>
               <div style={{ width: 190, height: 220, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <AppleGuide />
+                <ScannerFrame />
                 <motion.div animate={{ y: [-80, 80, -80] }} transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
                   style={{ position: 'absolute', width: 160, height: 2, background: 'linear-gradient(to right, transparent, #4ade80, transparent)', boxShadow: '0 0 16px #4ade80, 0 0 40px rgba(74,222,128,0.4)' }} />
               </div>
@@ -231,44 +280,19 @@ export default function DiagnosePage() {
   );
 }
 
-function AppleGuide() {
+// Simple scanner frame for the scanning phase (replaces AppleGuide)
+function ScannerFrame() {
   return (
-    <motion.svg
-      width="190" height="220" viewBox="0 0 190 220"
-      animate={{ opacity: [0.5, 1, 0.5] }}
-      transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
-      style={{ filter: 'drop-shadow(0 0 8px rgba(74,222,128,0.6))' }}
-    >
-      {/* Stem */}
-      <motion.path
-        d="M 95 48 C 95 35, 100 22, 112 14"
-        fill="none" stroke="#4ade80" strokeWidth="3" strokeLinecap="round"
-      />
-      {/* Leaf */}
-      <motion.path
-        d="M 108 28 C 118 16, 136 18, 130 32 C 124 40, 108 35, 108 28 Z"
-        fill="rgba(74,222,128,0.25)" stroke="#4ade80" strokeWidth="1.8"
-      />
-      {/* Apple body */}
-      <motion.path
-        d="M 95 52
-           C 80 42, 55 42, 38 58
-           C 18 76, 10 102, 12 128
-           C 15 162, 38 192, 68 200
-           C 80 204, 88 201, 95 198
-           C 102 201, 110 204, 122 200
-           C 152 192, 175 162, 178 128
-           C 180 102, 172 76, 152 58
-           C 135 42, 110 42, 95 52 Z"
-        fill="rgba(74,222,128,0.07)"
-        stroke="#4ade80"
-        strokeWidth="2.5"
-        strokeDasharray="10 5"
-      />
-      {/* Center hint text */}
-      <text x="95" y="135" textAnchor="middle" fill="rgba(74,222,128,0.8)" fontSize="11" fontFamily="Arial" fontWeight="600">
-        Placez la pomme ici
-      </text>
-    </motion.svg>
+    <svg width="190" height="220" viewBox="0 0 190 220" style={{ opacity: 0.8 }}>
+      {/* Corners only */}
+      {[
+        [10,10,40,10,10,40], [180,10,150,10,180,40],
+        [10,210,40,210,10,180], [180,210,150,210,180,180]
+      ].map(([x1,y1,x2,y2,x3,y3], i) => (
+        <polyline key={i} points={`${x2},${y2} ${x1},${y1} ${x3},${y3}`}
+          fill="none" stroke="#4ade80" strokeWidth="4" strokeLinecap="round"
+          style={{ filter: 'drop-shadow(0 0 6px rgba(74,222,128,0.8))' }} />
+      ))}
+    </svg>
   );
 }
