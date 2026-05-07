@@ -45,7 +45,7 @@ export default function DiagnosePage() {
       c.width = sw; c.height = sh;
       c.getContext('2d').drawImage(img, sx, sy, sw, sh, 0, 0, sw, sh);
       return new Promise(resolve => c.toBlob(b => resolve({
-        file: new File([b], `apple-${i+1}-${Date.now()}.jpg`, { type: 'image/jpeg' }),
+        file: new File([b], `pomme-${i+1}-${Date.now()}.jpg`, { type: 'image/jpeg' }),
         previewUrl: URL.createObjectURL(b),
       }), 'image/jpeg', 0.92));
     }));
@@ -87,7 +87,7 @@ export default function DiagnosePage() {
       const results = await Promise.all(multiFiles.map(f => diagnoseImage(f)));
       setMultiResults(results); setPhase('multi-result');
     } catch {
-      setMultiError('Failed to contact server. Please try again.'); setPhase('multi-preview');
+      setMultiError('Impossible de contacter le serveur. Veuillez réessayer.'); setPhase('multi-preview');
     }
   }
 
@@ -101,14 +101,14 @@ export default function DiagnosePage() {
   async function analyze() {
     setPhase('scanning');
     try { const data = await diagnoseImage(file); setResult(data); setPhase('result'); }
-    catch { setError('Unable to contact server. Please try again.'); setPhase('preview'); }
+    catch { setError('Impossible de contacter le serveur. Veuillez réessayer.'); setPhase('preview'); }
   }
 
   return (
     <div style={{position:'absolute',inset:0,background:'#000',overflow:'hidden'}}>
       <AnimatePresence mode="wait">
 
-        {/* CAMERA */}
+        {/* CAMÉRA */}
         {(phase==='camera'||phase==='checking') && (
           <motion.div key="camera" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} style={{position:'absolute',inset:0}}>
             <CameraCapture key={cameraKey} ref={camRef} onCapture={handleFile} onError={setCamError} model={modelRef.current} onDetectionChange={handleDetection}/>
@@ -116,12 +116,12 @@ export default function DiagnosePage() {
               <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
                 <div>
                   <div style={{color:'#fff',fontWeight:700,fontSize:18}}>Apple Doctor</div>
-                  <div style={{color:'#4ade80',fontSize:11,marginTop:2}}>AI Disease Detection</div>
+                  <div style={{color:'#4ade80',fontSize:11,marginTop:2}}>Détection de Maladies par IA</div>
                 </div>
                 {appleCount>0 && (
                   <motion.div initial={{scale:0}} animate={{scale:1}} style={{background:'rgba(22,101,52,0.9)',border:'1.5px solid #4ade80',borderRadius:20,padding:'6px 14px',display:'flex',alignItems:'center',gap:6}}>
                     <div style={{width:7,height:7,borderRadius:'50%',background:'#4ade80',boxShadow:'0 0 6px #4ade80'}}/>
-                    <span style={{color:'#fff',fontSize:12,fontWeight:700}}>{appleCount} apple{appleCount>1?'s':''} detected</span>
+                    <span style={{color:'#fff',fontSize:12,fontWeight:700}}>{appleCount} pomme{appleCount>1?'s':''} détectée{appleCount>1?'s':''}</span>
                   </motion.div>
                 )}
               </div>
@@ -129,14 +129,16 @@ export default function DiagnosePage() {
             {phase==='checking' && (
               <div style={{position:'absolute',inset:0,background:'rgba(0,0,0,0.65)',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:16,zIndex:6}}>
                 <motion.div animate={{rotate:360}} transition={{duration:1,repeat:Infinity,ease:'linear'}} style={{width:40,height:40,border:'3px solid rgba(255,255,255,0.2)',borderTop:'3px solid #4ade80',borderRadius:'50%'}}/>
-                <div style={{color:'#fff',fontSize:15,fontWeight:600}}>Verifying apple...</div>
+                <div style={{color:'#fff',fontSize:15,fontWeight:600}}>Vérification en cours...</div>
               </div>
             )}
             {camError && <div style={{position:'absolute',top:'50%',left:24,right:24,transform:'translateY(-50%)',background:'rgba(0,0,0,0.8)',borderRadius:16,padding:20,textAlign:'center',color:'#fca5a5',fontSize:13,zIndex:6}}>{camError}</div>}
             {phase==='camera' && (
               <div style={{position:'absolute',bottom:0,left:0,right:0,padding:'16px 40px 40px',background:'linear-gradient(to top,rgba(0,0,0,0.8),transparent)',display:'flex',flexDirection:'column',alignItems:'center',gap:10,zIndex:3}}>
                 <div style={{color:appleCount>0?'#4ade80':'rgba(255,255,255,0.5)',fontSize:12,fontWeight:600}}>
-                  {appleCount===0?'Point at apple(s)...':appleCount>1?`${appleCount} apples — will analyze each`:'Ready to capture'}
+                  {appleCount===0?'Pointez vers une pomme...'
+                    :appleCount>1?`${appleCount} pommes — analyse individuelle`
+                    :'Prêt à capturer'}
                 </div>
                 <motion.button whileTap={{scale:0.92}} onClick={()=>camRef.current?.capture()}
                   style={{width:76,height:76,borderRadius:'50%',border:'none',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',
@@ -151,10 +153,10 @@ export default function DiagnosePage() {
                 <motion.div key="noapple" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} style={{position:'absolute',inset:0,background:'rgba(0,0,0,0.75)',display:'flex',alignItems:'center',justifyContent:'center',padding:24,zIndex:10}}>
                   <motion.div initial={{scale:0.85}} animate={{scale:1}} exit={{scale:0.85}} transition={{type:'spring',stiffness:300,damping:25}} style={{background:'#fff',borderRadius:24,padding:32,textAlign:'center',width:'100%',maxWidth:320}}>
                     <div style={{width:56,height:56,borderRadius:'50%',background:'#fef2f2',border:'2px solid #fca5a5',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 16px',fontSize:24,color:'#dc2626',fontWeight:700}}>!</div>
-                    <div style={{fontWeight:700,fontSize:17,color:'#1f2937',marginBottom:8}}>No apple detected</div>
-                    <div style={{fontSize:13,color:'#6b7280',marginBottom:24,lineHeight:1.6}}>Wait for the camera to frame an apple before capturing.</div>
-                    <button onClick={()=>setNoApple(false)} style={{width:'100%',padding:15,background:'#166534',color:'#fff',border:'none',borderRadius:14,fontSize:15,fontWeight:700,cursor:'pointer',marginBottom:10}}>Try again</button>
-                    <button onClick={()=>{setNoApple(false);setPhase('preview');}} style={{width:'100%',padding:13,background:'transparent',color:'#6b7280',border:'1.5px solid #e5e7eb',borderRadius:14,fontSize:14,cursor:'pointer'}}>Continue anyway</button>
+                    <div style={{fontWeight:700,fontSize:17,color:'#1f2937',marginBottom:8}}>Aucune pomme détectée</div>
+                    <div style={{fontSize:13,color:'#6b7280',marginBottom:24,lineHeight:1.6}}>Attendez que la caméra encadre une pomme avant de capturer.</div>
+                    <button onClick={()=>setNoApple(false)} style={{width:'100%',padding:15,background:'#166534',color:'#fff',border:'none',borderRadius:14,fontSize:15,fontWeight:700,cursor:'pointer',marginBottom:10}}>Réessayer</button>
+                    <button onClick={()=>{setNoApple(false);setPhase('preview');}} style={{width:'100%',padding:13,background:'transparent',color:'#6b7280',border:'1.5px solid #e5e7eb',borderRadius:14,fontSize:14,cursor:'pointer'}}>Continuer quand même</button>
                   </motion.div>
                 </motion.div>
               )}
@@ -162,7 +164,7 @@ export default function DiagnosePage() {
           </motion.div>
         )}
 
-        {/* SINGLE PREVIEW */}
+        {/* APERÇU SIMPLE */}
         {phase==='preview' && (
           <motion.div key="preview" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} style={{position:'absolute',inset:0}}>
             <img src={preview} alt="captured" style={{width:'100%',height:'100%',objectFit:'cover'}}/>
@@ -171,16 +173,16 @@ export default function DiagnosePage() {
               <div style={{width:36,height:4,borderRadius:2,background:'#e2e8f0',margin:'0 auto 20px'}}/>
               <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:16}}>
                 <div style={{width:8,height:8,borderRadius:'50%',background:'#16a34a'}}/>
-                <span style={{color:'#16a34a',fontWeight:600,fontSize:14}}>Apple detected — ready for analysis</span>
+                <span style={{color:'#16a34a',fontWeight:600,fontSize:14}}>Pomme détectée — prête pour l'analyse</span>
               </div>
               {error && <div style={{background:'#fef2f2',color:'#dc2626',borderRadius:10,padding:'12px 16px',fontSize:13,marginBottom:14}}>{error}</div>}
-              <button onClick={analyze} style={{width:'100%',padding:17,background:'linear-gradient(135deg,#166534,#22c55e)',color:'#fff',border:'none',borderRadius:18,fontSize:16,fontWeight:700,cursor:'pointer',marginBottom:12}}>Analyze with AI</button>
-              <button onClick={reset} style={{width:'100%',padding:14,background:'transparent',color:'#64748b',border:'none',borderRadius:18,fontSize:15,cursor:'pointer'}}>Retake photo</button>
+              <button onClick={analyze} style={{width:'100%',padding:17,background:'linear-gradient(135deg,#166534,#22c55e)',color:'#fff',border:'none',borderRadius:18,fontSize:16,fontWeight:700,cursor:'pointer',marginBottom:12}}>Analyser avec l'IA</button>
+              <button onClick={reset} style={{width:'100%',padding:14,background:'transparent',color:'#64748b',border:'none',borderRadius:18,fontSize:15,cursor:'pointer'}}>Reprendre la photo</button>
             </motion.div>
           </motion.div>
         )}
 
-        {/* MULTI PREVIEW */}
+        {/* APERÇU MULTI */}
         {phase==='multi-preview' && (
           <motion.div key="multi-preview" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} style={{position:'absolute',inset:0,background:'#0f172a',display:'flex',flexDirection:'column'}}>
             <div style={{position:'relative',flex:1,overflow:'hidden'}}>
@@ -190,15 +192,15 @@ export default function DiagnosePage() {
                 <div style={{color:'#fff',fontWeight:700,fontSize:17}}>Apple Doctor</div>
               </div>
               <div style={{position:'absolute',bottom:0,left:0,right:0,padding:'0 20px 20px'}}>
-                <div style={{color:'#4ade80',fontWeight:700,fontSize:16,marginBottom:4}}>{multiPreviews.length} apples detected</div>
-                <div style={{color:'rgba(255,255,255,0.6)',fontSize:13}}>Each will be analyzed separately</div>
+                <div style={{color:'#4ade80',fontWeight:700,fontSize:16,marginBottom:4}}>{multiPreviews.length} pommes détectées</div>
+                <div style={{color:'rgba(255,255,255,0.6)',fontSize:13}}>Chaque pomme sera analysée séparément</div>
               </div>
             </div>
             <div style={{padding:'16px 20px',background:'#0f172a'}}>
               <div style={{display:'flex',gap:10,overflowX:'auto',paddingBottom:4}}>
                 {multiPreviews.map((url,i) => (
                   <div key={i} style={{flexShrink:0,position:'relative'}}>
-                    <img src={url} alt={`apple ${i+1}`} style={{width:64,height:64,objectFit:'cover',borderRadius:12,border:'2px solid #4ade80'}}/>
+                    <img src={url} alt={`pomme ${i+1}`} style={{width:64,height:64,objectFit:'cover',borderRadius:12,border:'2px solid #4ade80'}}/>
                     <div style={{position:'absolute',top:-6,right:-6,width:20,height:20,borderRadius:'50%',background:'#4ade80',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:700,color:'#000'}}>{i+1}</div>
                   </div>
                 ))}
@@ -206,13 +208,13 @@ export default function DiagnosePage() {
             </div>
             <div style={{padding:'0 20px 40px',background:'#0f172a'}}>
               {multiError && <div style={{background:'#450a0a',color:'#fca5a5',borderRadius:10,padding:'10px 14px',fontSize:13,marginBottom:12}}>{multiError}</div>}
-              <button onClick={analyzeMulti} style={{width:'100%',padding:17,background:'linear-gradient(135deg,#166534,#22c55e)',color:'#fff',border:'none',borderRadius:18,fontSize:16,fontWeight:700,cursor:'pointer',marginBottom:12}}>Analyze all {multiPreviews.length} apples</button>
-              <button onClick={reset} style={{width:'100%',padding:14,background:'transparent',color:'#64748b',border:'none',borderRadius:18,fontSize:15,cursor:'pointer'}}>Retake photo</button>
+              <button onClick={analyzeMulti} style={{width:'100%',padding:17,background:'linear-gradient(135deg,#166534,#22c55e)',color:'#fff',border:'none',borderRadius:18,fontSize:16,fontWeight:700,cursor:'pointer',marginBottom:12}}>Analyser les {multiPreviews.length} pommes</button>
+              <button onClick={reset} style={{width:'100%',padding:14,background:'transparent',color:'#64748b',border:'none',borderRadius:18,fontSize:15,cursor:'pointer'}}>Reprendre la photo</button>
             </div>
           </motion.div>
         )}
 
-        {/* MULTI SCANNING */}
+        {/* ANALYSE MULTI */}
         {phase==='multi-scanning' && (
           <motion.div key="multi-scanning" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} style={{position:'absolute',inset:0,background:'#0f172a',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:32}}>
             <div style={{display:'flex',gap:12}}>
@@ -224,26 +226,26 @@ export default function DiagnosePage() {
               ))}
             </div>
             <div style={{textAlign:'center'}}>
-              <div style={{color:'#fff',fontSize:18,fontWeight:600}}>Analyzing {multiPreviews.length} apples...</div>
-              <div style={{color:'#4ade80',fontSize:13,marginTop:6}}>Running AI in parallel</div>
+              <div style={{color:'#fff',fontSize:18,fontWeight:600}}>Analyse de {multiPreviews.length} pommes en cours...</div>
+              <div style={{color:'#4ade80',fontSize:13,marginTop:6}}>IA lancée en parallèle</div>
             </div>
           </motion.div>
         )}
 
-        {/* MULTI RESULT */}
+        {/* RÉSULTAT MULTI */}
         {phase==='multi-result' && multiResults.length>0 && (
           <motion.div key="multi-result" initial={{opacity:0,y:30}} animate={{opacity:1,y:0}} exit={{opacity:0}} style={{position:'absolute',inset:0,background:'#f8fafc',overflowY:'auto'}}>
             <div style={{padding:'48px 20px 20px',background:'linear-gradient(135deg,#166534,#16a34a)'}}>
-              <div style={{color:'#fff',fontWeight:800,fontSize:20}}>Analysis Complete</div>
-              <div style={{color:'#86efac',fontSize:13,marginTop:2}}>{multiResults.length} apples analyzed</div>
+              <div style={{color:'#fff',fontWeight:800,fontSize:20}}>Analyse Terminée</div>
+              <div style={{color:'#86efac',fontSize:13,marginTop:2}}>{multiResults.length} pommes analysées</div>
             </div>
             <div style={{padding:'16px 16px 32px',display:'flex',flexDirection:'column',gap:16}}>
               {multiResults.map((res,i) => (
                 <motion.div key={i} initial={{opacity:0,y:16}} animate={{opacity:1,y:0}} transition={{delay:i*0.1}} style={{background:'#fff',borderRadius:20,overflow:'hidden',boxShadow:'0 2px 12px rgba(0,0,0,0.06)'}}>
                   <div style={{display:'flex',alignItems:'center',gap:12,padding:'14px 16px',borderBottom:'1px solid #f1f5f9'}}>
-                    <img src={multiPreviews[i]} alt={`apple ${i+1}`} style={{width:52,height:52,objectFit:'cover',borderRadius:10,border:'2px solid #e2e8f0'}}/>
+                    <img src={multiPreviews[i]} alt={`pomme ${i+1}`} style={{width:52,height:52,objectFit:'cover',borderRadius:10,border:'2px solid #e2e8f0'}}/>
                     <div>
-                      <div style={{fontWeight:700,fontSize:15,color:'#1e293b'}}>Apple {i+1}</div>
+                      <div style={{fontWeight:700,fontSize:15,color:'#1e293b'}}>Pomme {i+1}</div>
                       <div style={{fontSize:12,color:'#64748b',marginTop:2}}>ID: {res?.request_id?.slice(0,8)}...</div>
                     </div>
                   </div>
@@ -252,12 +254,12 @@ export default function DiagnosePage() {
                   </div>
                 </motion.div>
               ))}
-              <button onClick={reset} style={{width:'100%',padding:17,background:'linear-gradient(135deg,#166534,#22c55e)',color:'#fff',border:'none',borderRadius:18,fontSize:16,fontWeight:700,cursor:'pointer',marginTop:8}}>Scan more apples</button>
+              <button onClick={reset} style={{width:'100%',padding:17,background:'linear-gradient(135deg,#166534,#22c55e)',color:'#fff',border:'none',borderRadius:18,fontSize:16,fontWeight:700,cursor:'pointer',marginTop:8}}>Scanner d'autres pommes</button>
             </div>
           </motion.div>
         )}
 
-        {/* SINGLE SCANNING */}
+        {/* ANALYSE SIMPLE */}
         {phase==='scanning' && (
           <motion.div key="scanning" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} style={{position:'absolute',inset:0}}>
             <img src={preview} alt="scanning" style={{width:'100%',height:'100%',objectFit:'cover'}}/>
@@ -268,24 +270,24 @@ export default function DiagnosePage() {
                 <motion.div animate={{y:[-30,30,-30]}} transition={{duration:2,repeat:Infinity,ease:'easeInOut'}} style={{width:80,height:2,background:'linear-gradient(to right,transparent,#4ade80,transparent)',boxShadow:'0 0 16px #4ade80'}}/>
               </div>
               <div style={{textAlign:'center'}}>
-                <div style={{color:'#fff',fontSize:18,fontWeight:600}}>Analyzing...</div>
-                <div style={{color:'#4ade80',fontSize:13,marginTop:6}}>AI scanning apple tissue</div>
+                <div style={{color:'#fff',fontSize:18,fontWeight:600}}>Analyse en cours...</div>
+                <div style={{color:'#4ade80',fontSize:13,marginTop:6}}>L'IA scanne le tissu de la pomme</div>
               </div>
             </div>
           </motion.div>
         )}
 
-        {/* SINGLE RESULT */}
+        {/* RÉSULTAT SIMPLE */}
         {phase==='result' && result && (
           <motion.div key="result" initial={{opacity:0,y:30}} animate={{opacity:1,y:0}} exit={{opacity:0}} style={{position:'absolute',inset:0,background:'#f8fafc',overflowY:'auto'}}>
             <div style={{position:'relative',height:260,flexShrink:0}}>
               <img src={preview} alt="result" style={{width:'100%',height:'100%',objectFit:'cover'}}/>
               <div style={{position:'absolute',inset:0,background:'linear-gradient(to bottom,rgba(0,0,0,0.2) 0%,rgba(248,250,252,1) 100%)'}}/>
-              <button onClick={reset} style={{position:'absolute',top:16,left:16,background:'rgba(0,0,0,0.45)',backdropFilter:'blur(8px)',border:'none',color:'#fff',borderRadius:12,padding:'8px 14px',fontSize:13,fontWeight:600,cursor:'pointer'}}>New scan</button>
+              <button onClick={reset} style={{position:'absolute',top:16,left:16,background:'rgba(0,0,0,0.45)',backdropFilter:'blur(8px)',border:'none',color:'#fff',borderRadius:12,padding:'8px 14px',fontSize:13,fontWeight:600,cursor:'pointer'}}>Nouveau scan</button>
             </div>
             <div style={{padding:'0 16px calc(32px + env(safe-area-inset-bottom))',marginTop:-8}}>
               <DiagnosisReport result={result} imagePreview={preview}/>
-              <button onClick={reset} style={{width:'100%',marginTop:20,padding:17,background:'linear-gradient(135deg,#166534,#22c55e)',color:'#fff',border:'none',borderRadius:18,fontSize:16,fontWeight:700,cursor:'pointer'}}>Scan another apple</button>
+              <button onClick={reset} style={{width:'100%',marginTop:20,padding:17,background:'linear-gradient(135deg,#166534,#22c55e)',color:'#fff',border:'none',borderRadius:18,fontSize:16,fontWeight:700,cursor:'pointer'}}>Scanner une autre pomme</button>
             </div>
           </motion.div>
         )}
