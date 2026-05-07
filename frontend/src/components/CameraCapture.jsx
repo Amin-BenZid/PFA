@@ -2,24 +2,21 @@ import { useRef, useState, useEffect, forwardRef, useImperativeHandle } from 're
 
 const CameraCapture = forwardRef(function CameraCapture({ onCapture, onError, model, onDetectionChange }, ref) {
   const videoRef   = useRef(null);
-  const canvasRef  = useRef(null);      // hidden canvas for capture
-  const overlayRef = useRef(null);      // visible canvas for bounding boxes
+  const canvasRef  = useRef(null);
+  const overlayRef = useRef(null);
   const streamRef  = useRef(null);
   const loopRef    = useRef(null);
+  const rawBboxRef = useRef([]);   // raw video-coordinate bboxes for cropping
   const [flash, setFlash] = useState(false);
   const [ready, setReady] = useState(false);
 
-  useImperativeHandle(ref, () => ({ capture }));
+  useImperativeHandle(ref, () => ({ capture, getRawBboxes: () => rawBboxRef.current }));
 
   useEffect(() => {
     start();
-    return () => {
-      stop();
-      cancelAnimationFrame(loopRef.current);
-    };
+    return () => { stop(); cancelAnimationFrame(loopRef.current); };
   }, []);
 
-  // Start detection loop once video is ready and model available
   useEffect(() => {
     if (ready && model) startDetection();
     return () => cancelAnimationFrame(loopRef.current);
@@ -64,13 +61,16 @@ const CameraCapture = forwardRef(function CameraCapture({ onCapture, onError, mo
         const predictions = await model.detect(video, 20, 0.08);
         const apples = predictions.filter(p => p.class === 'apple' && p.score > 0.08);
 
+        // Store raw bboxes (in video coordinates) for cropping
+        rawBboxRef.current = apples.map(a => a.bbox);
+
         apples.forEach(({ bbox, score }) => {
           const [x, y, w, h] = bbox;
           const scaleX = overlay.width  / video.videoWidth;
           const scaleY = overlay.height / video.videoHeight;
           const rx = x * scaleX, ry = y * scaleY, rw = w * scaleX, rh = h * scaleY;
 
-          // Glow bounding box
+          // Glow box
           ctx.strokeStyle = '#4ade80';
           ctx.lineWidth   = 3;
           ctx.shadowColor = 'rgba(74,222,128,0.7)';
@@ -83,19 +83,19 @@ const CameraCapture = forwardRef(function CameraCapture({ onCapture, onError, mo
           ctx.strokeStyle = '#22c55e';
           ctx.lineWidth   = 5;
           [
-            [rx,      ry,      rx + cs, ry,      rx,      ry + cs],
-            [rx + rw, ry,      rx+rw-cs,ry,      rx + rw, ry + cs],
-            [rx,      ry + rh, rx + cs, ry + rh, rx,      ry+rh-cs],
-            [rx + rw, ry + rh, rx+rw-cs,ry + rh, rx + rw, ry+rh-cs],
-          ].forEach(([x1, y1, x2, y2, x3, y3]) => {
+            [rx,      ry,      rx+cs,   ry,      rx,      ry+cs  ],
+            [rx+rw,   ry,      rx+rw-cs,ry,      rx+rw,   ry+cs  ],
+            [rx,      ry+rh,   rx+cs,   ry+rh,   rx,      ry+rh-cs],
+            [rx+rw,   ry+rh,   rx+rw-cs,ry+rh,   rx+rw,   ry+rh-cs],
+          ].forEach(([x1,y1,x2,y2,x3,y3]) => {
             ctx.beginPath();
-            ctx.moveTo(x1, y1); ctx.lineTo(x2, y2);
-            ctx.moveTo(x1, y1); ctx.lineTo(x3, y3);
+            ctx.moveTo(x1,y1); ctx.lineTo(x2,y2);
+            ctx.moveTo(x1,y1); ctx.lineTo(x3,y3);
             ctx.stroke();
           });
 
-          // Confidence label
-          const label = `🍎 ${Math.round(score * 100)}%`;
+          // Label
+          const label = `Apple ${Math.round(score * 100)}%`;
           ctx.font = 'bold 13px Arial';
           const tw = ctx.measureText(label).width;
           ctx.fillStyle = 'rgba(22,101,52,0.88)';
@@ -106,9 +106,10 @@ const CameraCapture = forwardRef(function CameraCapture({ onCapture, onError, mo
           ctx.fillText(label, rx + 8, ry - 10);
         });
 
-        onDetectionChange?.(apples.length);
+        onDetectionChange?.(apples.length, rawBboxRef.current);
       } catch {
-        onDetectionChange?.(0);
+        rawBboxRef.current = [];
+        onDetectionChange?.(0, []);
       }
 
       loopRef.current = requestAnimationFrame(detect);
@@ -125,7 +126,10 @@ const CameraCapture = forwardRef(function CameraCapture({ onCapture, onError, mo
     setFlash(true);
     setTimeout(() => setFlash(false), 200);
     canvas.toBlob(blob => {
-      onCapture(new File([blob], `capture-${Date.now()}.jpg`, { type: 'image/jpeg' }));
+      onCapture(
+        new File([blob], `capture-${Date.now()}.jpg`, { type: 'image/jpeg' }),
+        rawBboxRef.current   // pass bboxes along with the file
+      );
       stop();
       cancelAnimationFrame(loopRef.current);
     }, 'image/jpeg', 0.92);
@@ -135,21 +139,16 @@ const CameraCapture = forwardRef(function CameraCapture({ onCapture, onError, mo
     <>
       <video ref={videoRef} autoPlay playsInline muted
         style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-
-      {/* Live bounding box overlay */}
       <canvas ref={overlayRef}
         style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 2 }} />
-
       {flash && (
         <div style={{ position: 'absolute', inset: 0, background: '#fff', opacity: 0.7, pointerEvents: 'none', zIndex: 10 }} />
       )}
-
       {!ready && (
         <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#000', zIndex: 5 }}>
-          <div style={{ color: '#4ade80', fontSize: 14 }}>Démarrage de la caméra...</div>
+          <div style={{ color: '#4ade80', fontSize: 14 }}>Starting camera...</div>
         </div>
       )}
-
       <canvas ref={canvasRef} style={{ display: 'none' }} />
     </>
   );
