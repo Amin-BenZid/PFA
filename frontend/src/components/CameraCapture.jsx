@@ -61,8 +61,8 @@ const CameraCapture = forwardRef(function CameraCapture({ onCapture, onError, mo
       ctx.clearRect(0, 0, overlay.width, overlay.height);
 
       try {
-        const predictions = await model.detect(video);
-        const apples = predictions.filter(p => p.class === 'apple' && p.score > 0.12);
+        const predictions = await model.detect(video, 20, 0.08);
+        const apples = predictions.filter(p => p.class === 'apple' && p.score > 0.08);
 
         apples.forEach(({ bbox, score }) => {
           const [x, y, w, h] = bbox;

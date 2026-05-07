@@ -44,8 +44,8 @@ export default function DiagnosePage() {
         const img = new Image();
         img.src = url;
         await new Promise(resolve => { img.onload = resolve; });
-        const predictions = await modelRef.current.detect(img);
-        const hasApple = predictions.some(p => p.class === 'apple' && p.score > 0.12);
+        const predictions = await modelRef.current.detect(img, 20, 0.08);
+        const hasApple = predictions.some(p => p.class === 'apple' && p.score > 0.08);
         if (!hasApple) {
           setNoApple(true);
           setCameraKey(k => k + 1);
